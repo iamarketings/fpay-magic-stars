@@ -65,6 +65,7 @@ export default function Dashboard() {
   const [cardExp, setCardExp] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [customStripeAmt, setCustomStripeAmt] = useState("");
   const [mmOp, setMmOp] = useState("Mvola");
   const [mmPhone, setMmPhone] = useState("");
   const [mmAmt, setMmAmt] = useState("");
@@ -452,7 +453,7 @@ export default function Dashboard() {
                 <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider">Paiement par Carte Bancaire (Stripe)</h2>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
                   { label: "Pack Bronze", stars: 50, eur: 5, desc: "Idéal pour démarrer." },
                   { label: "Pack Argent", stars: 120, eur: 10, desc: "Le plus populaire.", popular: true },
@@ -486,6 +487,37 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ))}
+
+                {/* Custom Amount */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between relative transition-all hover:shadow-md">
+                  <div>
+                    <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
+                      <PlusCircle className="h-5 w-5 text-indigo-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded uppercase">Montant Libre</span>
+                    <h3 className="text-lg font-black text-slate-900 mt-2 leading-tight">Saisissez un montant</h3>
+                    <p className="text-[11px] text-slate-500 mt-1">10 F-Stars = 1.00 €.</p>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div className="relative">
+                      <input type="number" placeholder="Ex: 500" value={customStripeAmt} onChange={e => setCustomStripeAmt(e.target.value)} min={10}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-400" />
+                      <Star className="absolute right-3 top-3 h-4 w-4 text-amber-400 fill-amber-400" />
+                    </div>
+                    <button
+                      disabled={!customStripeAmt || parseFloat(customStripeAmt) < 10}
+                      onClick={() => { 
+                        const stars = parseFloat(customStripeAmt);
+                        setPack({ stars, eur: Math.ceil(stars / 10) }); 
+                        setShowStripe(true); 
+                        setCustomStripeAmt("");
+                      }}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold text-xs rounded-xl py-2.5 transition-colors shadow-sm"
+                    >
+                      {customStripeAmt && parseFloat(customStripeAmt) >= 10 ? `Payer ${Math.ceil(parseFloat(customStripeAmt) / 10)}.00 €` : "Payer avec ma carte"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
