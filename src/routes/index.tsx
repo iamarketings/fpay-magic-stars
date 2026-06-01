@@ -87,8 +87,8 @@ function Index() {
               <Sparkles className="h-3.5 w-3.5" />
               Économie créateurs nouvelle génération
             </div>
-            <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.05]">
-              Soutenez vos<br />
+            <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+              Soutenez vos{" "}
               <span className="bg-[var(--gradient-primary)] bg-clip-text text-transparent">créateurs préférés</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
