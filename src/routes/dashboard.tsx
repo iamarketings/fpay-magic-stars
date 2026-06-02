@@ -195,7 +195,7 @@ export function Dashboard() {
               }`}
             >
               <div className={`${tab === n.key ? "text-white" : "text-slate-400"}`}>
-                {React.cloneElement(n.icon as React.ReactElement, { className: "h-5 w-5" })}
+                {React.cloneElement(n.icon as any, { className: "h-5 w-5" })}
               </div>
               {n.label}
             </button>
@@ -211,7 +211,7 @@ export function Dashboard() {
               }`}
             >
               <div className={`${tab === n.key ? "text-[#1864FF]" : "text-slate-400"}`}>
-                {React.cloneElement(n.icon as React.ReactElement, { className: "h-5 w-5" })}
+                {React.cloneElement(n.icon as any, { className: "h-5 w-5" })}
               </div>
               {n.label}
             </button>
@@ -260,7 +260,7 @@ export function Dashboard() {
                 {actionButtons.map(a => (
                   <button key={a.key} onClick={() => setTab(a.key as Tab)} className="flex flex-col items-center gap-2 hover:scale-105 transition-transform shrink-0">
                     <div className="h-12 w-12 rounded-full bg-white/15 border border-white/10 flex items-center justify-center shadow-lg shadow-black/5">
-                      {React.cloneElement(a.icon as React.ReactElement, { className: "h-5 w-5 text-white" })}
+                      {React.cloneElement(a.icon as any, { className: "h-5 w-5 text-white" })}
                     </div>
                     <span className="text-[10px] font-bold tracking-wide text-blue-50">{a.label}</span>
                   </button>
@@ -289,7 +289,7 @@ export function Dashboard() {
                           {actionButtons.map(a => (
                             <button key={a.key} onClick={() => setTab(a.key as Tab)} className="flex flex-col items-center gap-2 group">
                               <div className="h-14 w-14 rounded-[1.25rem] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-[#1864FF] group-hover:text-white group-hover:border-[#1864FF] transition-all shadow-sm">
-                                {React.cloneElement(a.icon as React.ReactElement, { className: "h-6 w-6" })}
+                                {React.cloneElement(a.icon as any, { className: "h-6 w-6" })}
                               </div>
                               <span className="text-xs font-bold text-slate-500 group-hover:text-slate-900">{a.label}</span>
                             </button>
@@ -678,7 +678,7 @@ export function Dashboard() {
               <button key={n.key} onClick={() => setTab(n.key as Tab)}
                 className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${tab === n.key ? "text-[#1864FF] -translate-y-0.5" : "text-slate-400 hover:text-slate-600"}`}
               >
-                {React.cloneElement(n.icon as React.ReactElement, { className: "h-6 w-6 mb-0.5" })}
+                {React.cloneElement(n.icon as any, { className: "h-6 w-6 mb-0.5" })}
                 <span className={`text-[9px] font-bold tracking-wide ${tab === n.key ? "opacity-100" : "opacity-0"}`}>{n.label}</span>
               </button>
             ))}
