@@ -6,16 +6,13 @@ import {
   ArrowRight,
   Sparkles,
   Users,
-  CheckCircle,
   HelpCircle,
   ChevronDown,
-  Gift,
   Heart,
-  Lock,
-  Tag,
-  Store,
   Star,
-  Share2
+  Share2,
+  Lock,
+  Send
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
@@ -25,7 +22,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FPay — Le Réseau de Soutien Numérique" },
-      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Achetez des FSTART et animez la communauté." },
+      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Obtenez des FSTART et animez la communauté." },
     ],
   }),
   component: Index,
@@ -58,7 +55,7 @@ function Index() {
       ...prev,
       [name]: prev[name] + amount,
     }));
-    toast.success(`Cadeau simulé : +${amount} FSTART envoyés à ${name}.`, {
+    toast.success(`Soutien simulé : +${amount} FSTART envoyés à ${name}.`, {
       description: "Ils pourront utiliser ces FSTART dans notre écosystème.",
     });
   };
@@ -66,19 +63,19 @@ function Index() {
   const faqs = [
     {
       q: "Que sont les FSTART ?",
-      a: "Les FSTART sont des jetons numériques achetés par les utilisateurs pour soutenir les créateurs et consommer sur FPay. Ils constituent une vente de service numérique et ne sont pas remboursables, garantissant une conformité totale avec les régulations Stripe.",
+      a: "Les FSTART sont l'unique unité de valeur circulant sur notre plateforme. Ce sont des jetons numériques utilisés par les membres pour échanger des services et se récompenser au sein de la communauté.",
     },
     {
       q: "Comment les membres de la communauté peuvent-ils utiliser leurs FSTART ?",
-      a: "Vos FSTART peuvent être utilisés pour soutenir un créateur, générer des Bons d'Achat chez nos partenaires à Madagascar (Hôtels, Restaurants, Supermarchés) ou payer directement des marchands du réseau FPay.",
+      a: "Vos FSTART peuvent être transférés instantanément à d'autres membres (P2P), ou utilisés pour récompenser quelqu'un pour un service rendu à la communauté FPay.",
     },
     {
-      q: "Peut-on retirer l'argent vers un compte bancaire ou Mobile Money ?",
-      a: "Non. FPay fonctionne en circuit fermé pour assurer une sécurité maximale et prévenir le blanchiment d'argent. Les FSTART sont uniquement consommés à l'intérieur de l'écosystème FPay (Paiements marchands, Vouchers).",
+      q: "Peut-on convertir les FSTART en espèces (Cash-out) ?",
+      a: "Non. FPay fonctionne strictement en circuit fermé pour assurer une sécurité maximale. Aucune logique de retrait en cash ou de paiement marchand direct n'existe sur le réseau.",
     },
     {
       q: "Comment fonctionne le programme d'affiliation communautaire ?",
-      a: "Vous pouvez inviter vos amis à rejoindre la communauté FPay en partageant votre lien de parrainage. Pour chaque nouvel utilisateur actif, vous recevez un bonus en FSTART directement sur votre portefeuille !",
+      a: "Vous pouvez inviter vos connaissances à rejoindre FPay en partageant votre lien de parrainage. Pour chaque nouvel utilisateur actif, vous recevez un bonus en FSTART directement sur votre portefeuille Ed25519 local !",
     },
   ];
 
@@ -87,8 +84,8 @@ function Index() {
       
       {/* Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white text-center py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-2">
-        <Sparkles className="h-4 w-4 text-blue-200" />
-        <span>Découvrez le réseau d'engagement en circuit fermé certifié Stripe.</span>
+        <Lock className="h-4 w-4 text-blue-200" />
+        <span>Découvrez le réseau d'engagement en circuit fermé 100% sécurisé.</span>
       </div>
 
       {/* Header */}
@@ -97,7 +94,7 @@ function Index() {
           <Logo />
           
           <ul className="hidden md:flex items-center gap-8">
-            {["Accueil", "Créateurs", "Affiliation", "Marchands"].map((item) => (
+            {["Accueil", "Créateurs", "Affiliation", "Services"].map((item) => (
               <li key={item}>
                 <a href={`#`} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">
                   {item}
@@ -137,17 +134,17 @@ function Index() {
           
           <div className="lg:col-span-6 space-y-10 text-center lg:text-left z-10">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-1.5 text-xs font-bold text-blue-600">
-              <Sparkles className="h-4 w-4" />
-              <span>SaaS d'engagement nouvelle génération</span>
+              <Shield className="h-4 w-4" />
+              <span>Réseau communautaire fermé (Non-Custodial)</span>
             </div>
             
             <h1 className="text-5xl lg:text-7xl font-black tracking-tighter text-slate-900 leading-[1.1]">
-              La monnaie de la <br />
+              L'écosystème de votre <br />
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">communauté</span>
             </h1>
             
             <p className="text-lg text-slate-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Achetez des <strong className="text-blue-600">FSTART</strong>, soutenez vos créateurs, parrainez vos amis et consommez chez nos marchands partenaires à Madagascar en toute simplicité.
+              Obtenez des <strong className="text-blue-600">FSTART</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
@@ -188,8 +185,8 @@ function Index() {
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-black tracking-widest">Stripe Secure</span>
-                  <span className="text-sm font-bold text-slate-900">Conformité Absolue</span>
+                  <span className="text-[10px] text-slate-400 block uppercase font-black tracking-widest">Ed25519 Local</span>
+                  <span className="text-sm font-bold text-slate-900">Sécurité Absolue</span>
                 </div>
               </div>
             </div>
@@ -210,38 +207,38 @@ function Index() {
               Le portefeuille de votre communauté
             </h2>
             <p className="text-slate-500 text-lg leading-relaxed">
-              Découvrez toutes les possibilités offertes par le jeton FSTART.
+              Découvrez toutes les possibilités offertes par le jeton FSTART, 100% géré localement.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white border border-slate-200 p-8 rounded-3xl hover:shadow-lg transition-all group">
               <div className="h-14 w-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-                <Gift className="h-7 w-7" />
+                <Heart className="h-7 w-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Soutien aux créateurs</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Envoyez des FSTART instantanément. La transaction est validée et le créateur peut directement les utiliser sur le réseau.
+                Envoyez des FSTART instantanément. La transaction est signée avec vos clés locales et le membre peut directement les utiliser sur le réseau.
               </p>
             </div>
 
             <div className="bg-white border border-slate-200 p-8 rounded-3xl hover:shadow-lg transition-all group">
               <div className="h-14 w-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-                <Store className="h-7 w-7" />
+                <Star className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Consommation locale</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Récompense de services</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Utilisez vos FSTART pour générer des bons d'achat ou payer directement nos partenaires locaux (Supermarchés, Hôtels).
+                Utilisez vos FSTART pour rémunérer un service rendu à la communauté (modération, art, entraide) via un transfert direct.
               </p>
             </div>
 
             <div className="bg-white border border-slate-200 p-8 rounded-3xl hover:shadow-lg transition-all group">
               <div className="h-14 w-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-                <Share2 className="h-7 w-7" />
+                <Send className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Affiliation Communautaire</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Transfert P2P</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Partagez votre lien FPay. Chaque nouvel ami rejoignant la communauté vous fait gagner des FSTART en récompense !
+                Échangez vos jetons librement et en toute sécurité avec n'importe quel autre membre du réseau grâce aux clés cryptographiques.
               </p>
             </div>
           </div>
@@ -252,8 +249,8 @@ function Index() {
       <section className="py-32 relative bg-white">
         <div className="max-w-7xl mx-auto px-6 space-y-16">
           <div className="text-center max-w-2xl mx-auto space-y-6">
-            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Testez l'envoi de FSTART</h2>
-            <p className="text-slate-500">Simulez le soutien à un créateur et voyez sa popularité augmenter en temps réel.</p>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Testez le soutien P2P</h2>
+            <p className="text-slate-500">Simulez le transfert de FSTART et voyez la popularité d'un membre augmenter en temps réel.</p>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-8">
@@ -324,7 +321,7 @@ function Index() {
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white" />
         <div className="relative z-10 max-w-2xl mx-auto px-6 space-y-8">
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Prêt à rejoindre l'écosystème ?</h2>
-          <p className="text-slate-500">Expérimentez le réseau de paiement FPay via notre Dashboard Sandbox.</p>
+          <p className="text-slate-500">Expérimentez le réseau fermé FPay via notre Dashboard Sandbox.</p>
           <Link
             to="/dashboard"
             className="inline-flex items-center justify-center rounded-2xl bg-blue-600 text-white font-black px-10 py-5 shadow-lg shadow-blue-600/30 hover:scale-105 transition-all duration-300"
@@ -335,7 +332,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-slate-200 py-8 text-center text-xs text-slate-500 bg-slate-50">
-        <p>© 2026 FPay Madagascar. Modèle Circuit Fermé — Conformité Stripe Atlas.</p>
+        <p>© 2026 FPay. Réseau Communautaire Fermé (Non-Custodial).</p>
       </footer>
     </div>
   );
