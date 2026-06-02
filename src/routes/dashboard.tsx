@@ -6,24 +6,15 @@ import {
   Home,
   PlusCircle,
   Send,
-  QrCode,
-  Store,
   Star,
-  Wallet,
-  ArrowUpRight,
   ArrowDownLeft,
   Smartphone,
-  MapPin,
-  Clock,
-  Info,
   Loader2,
-  Copy,
-  CreditCard,
-  Search,
-  CheckCircle,
-  ChevronRight,
   Menu,
   X,
+  CreditCard,
+  Key,
+  LogOut
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,94 +22,60 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-// ---- Helpers ----
-function formatAr(n: number) {
-  return n.toLocaleString("fr-MG") + " Ar";
-}
-
-type Tab = "home" | "acheter" | "envoyer" | "recevoir" | "payer";
+type Tab = "home" | "acheter" | "envoyer" | "recompenser" | "sortie";
 
 export default function Dashboard() {
   const {
     activeProfile,
-    balances,
+    balance,
     transactions,
-    virtualCards,
-    exchangeRate,
-    buyStarsCB,
-    buyStarsMobileMoney,
-    withdrawMobileMoney,
-    withdrawCashPoint,
-    generateVirtualCard,
-    payMerchant,
+    wallet,
+    generateWallet,
+    buyFstart,
     profiles,
     transferP2P,
+    rewardMember,
+    externalTransfer
   } = useFPay();
 
   const [tab, setTab] = useState<Tab>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // ─── Acheter ───
-  const [pack, setPack] = useState<{ stars: number; eur: number } | null>(null);
+  // --- Acheter ---
+  const [pack, setPack] = useState<{ fstart: number; eur: number } | null>(null);
   const [showStripe, setShowStripe] = useState(false);
-  const [cardNo, setCardNo] = useState("");
-  const [cardExp, setCardExp] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [customStripeAmt, setCustomStripeAmt] = useState("");
+  
   const [mmOp, setMmOp] = useState("Mvola");
   const [mmPhone, setMmPhone] = useState("");
   const [mmAmt, setMmAmt] = useState("");
   const [mmLoading, setMmLoading] = useState(false);
 
-  // ─── Envoyer ───
-  const [sendMode, setSendMode] = useState<"gift" | "mobile" | "cash">("gift");
-  // gift (F-Stars → créateur)
-  const [recipientQuery, setRecipientQuery] = useState(""); // email ou téléphone
+  // --- Envoyer (P2P) ---
+  const [recipientQuery, setRecipientQuery] = useState("");
   const [giftAmt, setGiftAmt] = useState("");
   const [giftLoading, setGiftLoading] = useState(false);
-  // retrait mobile
-  const [wdOp, setWdOp] = useState("Mvola");
-  const [wdPhone, setWdPhone] = useState("");
-  const [wdAmt, setWdAmt] = useState("");
-  const [wdLoading, setWdLoading] = useState(false);
-  // retrait cash point
-  const [cpLocation, setCpLocation] = useState("Supermaki Analakely");
-  const [cpAmt, setCpAmt] = useState("");
-  const [cpLoading, setCpLoading] = useState(false);
-  const [voucher, setVoucher] = useState<{ code: string; amount: number; location: string; fees: number } | null>(null);
 
-  // ─── Recevoir ───
-  const [qrStars, setQrStars] = useState("");
-  const [qrNote, setQrNote] = useState("");
-  const [scanLoading, setScanLoading] = useState(false);
+  // --- Récompenser ---
+  const [rewardRecipient, setRewardRecipient] = useState("CREATOR");
+  const [rewardAmt, setRewardAmt] = useState("");
+  const [rewardService, setRewardService] = useState("");
+  const [rewardLoading, setRewardLoading] = useState(false);
 
-  // ─── Carte virtuelle ───
-  const [vcAmt, setVcAmt] = useState("");
-  const [vcProv, setVcProv] = useState<"Visa" | "Mastercard">("Visa");
-  const [vcLoading, setVcLoading] = useState(false);
+  // --- Sortie Externe ---
+  const [extAmt, setExtAmt] = useState("");
+  const [extLoading, setExtLoading] = useState(false);
 
-  // ─── Payer ───
-  const [showMerchant, setShowMerchant] = useState(false);
-  const [paySource, setPaySource] = useState<"SOLDE_A" | "SOLDE_B">("SOLDE_A");
-  const [payLoading, setPayLoading] = useState(false);
-  const merchantItem = { name: "Casque Audio JBL Pro", priceAr: 180_000 };
-
-  const bal = balances[activeProfile.id];
-  const fee2 = (v: string) => Math.round((parseFloat(v) || 0) * 0.02);
-  const fee3 = (v: string) => Math.round((parseFloat(v) || 0) * 0.03);
-
-  // ── Handlers ──
+  // --- Handlers ---
   function handleBuyCB(e: React.FormEvent) {
     e.preventDefault();
     if (!pack) return;
     setStripeLoading(true);
     setTimeout(() => {
-      buyStarsCB(pack.stars, pack.eur);
+      buyFstart(pack.fstart, "STRIPE");
       setStripeLoading(false);
       setShowStripe(false);
       setPack(null);
-      setCardNo(""); setCardExp(""); setCardCvv("");
     }, 1500);
   }
 
@@ -128,39 +85,28 @@ export default function Dashboard() {
     if (!amt || !mmPhone) { toast.error("Remplissez tous les champs."); return; }
     setMmLoading(true);
     setTimeout(() => {
-      buyStarsMobileMoney(Math.floor(amt / exchangeRate), amt, mmOp, mmPhone);
+      buyFstart(Math.floor(amt / 10), "MOBILE_MONEY");
       setMmLoading(false); setMmAmt(""); setMmPhone("");
     }, 1500);
   }
 
   function handleSendGift(e: React.FormEvent) {
     e.preventDefault();
-    const stars = parseFloat(giftAmt);
-    if (!stars || !recipientQuery.trim()) { toast.error("Remplissez tous les champs."); return; }
-    if (bal.soldeA < stars) { toast.error("Vos F-Stars sont insuffisants."); return; }
+    const fstarts = parseFloat(giftAmt);
+    if (!fstarts || !recipientQuery.trim()) { toast.error("Remplissez tous les champs."); return; }
+    
     setGiftLoading(true);
     setTimeout(() => {
-      // 1. Chercher le destinataire par email exact parmi les profils connus
       const query = recipientQuery.trim().toLowerCase();
       const match = Object.values(profiles).find(
-        p => p.id !== activeProfile.id && (
-          p.email.toLowerCase() === query ||
-          // Recherche aussi par numéro de téléphone simulé (format 03X)
-          query.replace(/\s/g, "").startsWith("03")
-        )
+        p => p.id !== activeProfile.id && p.email.toLowerCase() === query
       );
 
       if (match) {
-        // ✅ Profil connu : transferP2P applique la règle :
-        //   → Débite soldeA (F-Stars) chez l'émetteur
-        //   → Crédite soldeB (Gains en Ariary) chez le destinataire
-        //   → Taux de conversion : 1 F-Star = exchangeRate Ar
-        transferP2P(match.id, stars);
+        transferP2P(match.id, fstarts);
       } else {
-        // ❌ Destinataire externe inconnu du système : on simule uniquement le débit
-        // (dans la réalité, un webhook enverrait la notification au destinataire)
-        transferP2P("CREATOR", stars); // Simulation : on crédite Clara par défaut
-        toast.info(`Cadeau envoyé à ${recipientQuery.trim()} — ils recevront une notification FPay.`);
+        transferP2P("MEMBER", fstarts);
+        toast.info(`Soutien envoyé vers le compte lié à ${recipientQuery.trim()}.`);
       }
       setGiftLoading(false);
       setGiftAmt("");
@@ -168,101 +114,63 @@ export default function Dashboard() {
     }, 1500);
   }
 
-  function handleWithdrawMM(e: React.FormEvent) {
+  function handleReward(e: React.FormEvent) {
     e.preventDefault();
-    const amt = parseFloat(wdAmt);
-    if (!amt || !wdPhone) { toast.error("Remplissez tous les champs."); return; }
-    setWdLoading(true);
+    const fstarts = parseFloat(rewardAmt);
+    if (!fstarts || !rewardService.trim()) { toast.error("Remplissez tous les champs."); return; }
+    setRewardLoading(true);
     setTimeout(() => {
-      withdrawMobileMoney(wdOp, wdPhone, amt);
-      setWdLoading(false); setWdAmt(""); setWdPhone("");
+      // @ts-ignore
+      rewardMember(rewardRecipient, fstarts, rewardService);
+      setRewardLoading(false);
+      setRewardAmt("");
+      setRewardService("");
     }, 1500);
   }
 
-  function handleWithdrawCash(e: React.FormEvent) {
+  function handleExternal(e: React.FormEvent) {
     e.preventDefault();
-    const amt = parseFloat(cpAmt);
-    if (!amt) { toast.error("Entrez un montant valide."); return; }
-    setCpLoading(true);
+    const fstarts = parseFloat(extAmt);
+    if (!fstarts) { toast.error("Entrez le montant à sortir."); return; }
+    setExtLoading(true);
     setTimeout(() => {
-      const res = withdrawCashPoint(cpLocation, amt);
-      if (res) setVoucher({ code: res.code, amount: amt, location: cpLocation, fees: res.fees });
-      setCpLoading(false); setCpAmt("");
-    }, 1500);
-  }
-
-  function handleSimulateScan() {
-    const stars = parseFloat(qrStars) || 50;
-    setScanLoading(true);
-    setTimeout(() => {
-      const ariaryEquivalent = stars * exchangeRate;
-      balances[activeProfile.id].soldeB += ariaryEquivalent;
-      transactions.unshift({
-        id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-        date: new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR").slice(0, 5),
-        type: "TRANSFERT",
-        description: `Cadeau reçu via QR Code (${stars} ⭐)`,
-        amountA: 0,
-        amountB: ariaryEquivalent,
-        status: "COMPLETED",
-      });
-      setScanLoading(false);
-      toast.success(`Vous avez reçu ${stars} ⭐ soit ${formatAr(ariaryEquivalent)} de gains !`);
-    }, 1500);
-  }
-
-  function handleGenCard(e: React.FormEvent) {
-    e.preventDefault();
-    const amt = parseFloat(vcAmt);
-    if (!amt) { toast.error("Entrez un montant valide."); return; }
-    setVcLoading(true);
-    setTimeout(() => {
-      generateVirtualCard(amt, vcProv);
-      setVcLoading(false); setVcAmt("");
-    }, 1500);
-  }
-
-  function handleMerchantPay(e: React.FormEvent) {
-    e.preventDefault();
-    setPayLoading(true);
-    setTimeout(() => {
-      const ok = payMerchant("MERCHANT", paySource, merchantItem.priceAr);
-      setPayLoading(false);
-      if (ok) setShowMerchant(false);
+      externalTransfer(fstarts);
+      setExtLoading(false);
+      setExtAmt("");
     }, 1500);
   }
 
   const navItems: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "home", label: "Accueil", icon: <Home className="h-4 w-4" /> },
+    { key: "home", label: "Dashboard", icon: <Home className="h-4 w-4" /> },
     { key: "acheter", label: "Acheter", icon: <PlusCircle className="h-4 w-4" /> },
-    { key: "envoyer", label: "Envoyer / Retirer", icon: <Send className="h-4 w-4" /> },
-    { key: "recevoir", label: "Recevoir", icon: <QrCode className="h-4 w-4" /> },
-    { key: "payer", label: "Payer", icon: <Store className="h-4 w-4" /> },
+    { key: "envoyer", label: "Transférer (P2P)", icon: <Send className="h-4 w-4" /> },
+    { key: "recompenser", label: "Récompenser", icon: <Star className="h-4 w-4" /> },
+    { key: "sortie", label: "Sortie Externe", icon: <LogOut className="h-4 w-4" /> },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased">
-
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-500/30">
+      
       {/* Top nav */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-[0_3px_10px_-2px_rgba(79,70,229,0.4)]">
-              <Shield className="h-5 w-5 text-white" fill="currentColor" fillOpacity={0.1} />
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-3 shrink-0 group">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#1864FF] to-blue-400 flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform">
+              <Shield className="h-5 w-5 text-white" fill="currentColor" fillOpacity={0.2} />
             </div>
-            <span className="text-lg font-bold text-slate-900">FPay</span>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">FPay</span>
           </Link>
 
           {/* Desktop tab bar */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100 rounded-full p-1">
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 overflow-x-auto">
             {navItems.map(n => (
               <button
                 key={n.key}
                 onClick={() => setTab(n.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                className={`flex items-center whitespace-nowrap gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   tab === n.key
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white text-[#1864FF] shadow-sm border border-slate-200"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
                 }`}
               >
                 {n.icon}
@@ -271,29 +179,28 @@ export default function Dashboard() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1.5">
-              <div className="h-6 w-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">{activeProfile.avatar}</div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-full pl-1.5 pr-4 py-1.5 shadow-sm">
+              <div className="h-7 w-7 rounded-full bg-blue-100 text-[#1864FF] flex items-center justify-center text-[10px] font-black uppercase">
+                {activeProfile.avatar}
+              </div>
               {activeProfile.name}
             </div>
-            <Link to="/" className="text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 px-3 py-2 rounded-full transition-colors">
-              Déconnexion
-            </Link>
-            <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <button className="lg:hidden p-2 text-slate-400 hover:text-[#1864FF]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-slate-200 px-4 py-3 space-y-1">
+          <div className="lg:hidden bg-white border-t border-slate-200 px-6 py-4 space-y-2 absolute w-full shadow-xl">
             {navItems.map(n => (
               <button
                 key={n.key}
                 onClick={() => { setTab(n.key); setMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left ${
-                  tab === n.key ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all text-left ${
+                  tab === n.key ? "bg-blue-50 text-[#1864FF]" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {n.icon} {n.label}
@@ -303,778 +210,317 @@ export default function Dashboard() {
         )}
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8 space-y-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 space-y-10">
 
-        {/* ════════════════════════════════
-            TAB ACCUEIL
-        ════════════════════════════════ */}
         {tab === "home" && (
-          <div className="space-y-8">
-
-            {/* Greeting */}
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center font-black text-white text-lg shadow-md">
-                {activeProfile.avatar}
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Vue d'ensemble</h1>
+                <p className="text-sm text-slate-500">Bienvenue, {activeProfile.name}.</p>
               </div>
-              <div>
-                <h1 className="text-xl font-extrabold text-slate-900">Bonjour, {activeProfile.name}</h1>
-                <p className="text-xs text-slate-500">{activeProfile.email} · Taux : 1 F-Star = {exchangeRate} Ar</p>
+              <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2 shadow-sm">
+                {wallet ? (
+                  <>
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    Statut Wallet : <span className="text-green-600">Local Ed25519 (Prêt)</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-2 w-2 rounded-full bg-orange-500" />
+                    Statut Wallet : <span className="text-orange-600">Non généré</span>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Balance Cards */}
-            <div className="grid sm:grid-cols-2 gap-6">
-
-              {/* F-Stars card */}
-              <div className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -mr-8 -mt-8" />
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <span className="text-xs font-bold uppercase tracking-wider opacity-80">Mes F-Stars</span>
-                  <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Star className="h-4 w-4" />
-                  </div>
+            {/* Wallet Gen Alert */}
+            {!wallet && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+                <div>
+                  <h3 className="font-bold text-orange-900 flex items-center gap-2"><Key className="h-5 w-5" /> Générer votre portefeuille cryptographique</h3>
+                  <p className="text-orange-700 text-sm mt-1">Vos clés privées seront stockées de manière sécurisée uniquement sur cet appareil. Le serveur n'y a pas accès.</p>
                 </div>
-                <p className="text-5xl font-black tracking-tight relative z-10">{bal.soldeA.toLocaleString()}</p>
-                <p className="text-sm font-semibold mt-1 opacity-70 relative z-10">F-Stars disponibles</p>
-                <div className="mt-6 flex gap-2 relative z-10">
-                  <button onClick={() => setTab("acheter")} className="flex-1 bg-slate-900/20 hover:bg-slate-900/30 text-slate-900 font-bold text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1">
-                    <PlusCircle className="h-3.5 w-3.5" /> Acheter
-                  </button>
-                  <button onClick={() => { setTab("envoyer"); setSendMode("gift"); }} className="flex-1 bg-white/30 hover:bg-white/40 text-slate-900 font-bold text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1">
-                    <Send className="h-3.5 w-3.5" /> Envoyer
-                  </button>
-                </div>
-              </div>
-
-              {/* Gains card */}
-              <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -mr-8 -mt-8" />
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <span className="text-xs font-bold uppercase tracking-wider opacity-80">Mes Gains</span>
-                  <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Wallet className="h-4 w-4" />
-                  </div>
-                </div>
-                <p className="text-4xl font-black tracking-tight relative z-10">{bal.soldeB.toLocaleString()}</p>
-                <p className="text-sm font-semibold mt-1 opacity-70 relative z-10">Ariary disponibles</p>
-                <div className="mt-6 flex gap-2 relative z-10">
-                  <button onClick={() => { setTab("envoyer"); setSendMode("mobile"); }} className="flex-1 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1">
-                    <ArrowUpRight className="h-3.5 w-3.5" /> Retirer
-                  </button>
-                  <button onClick={() => setTab("recevoir")} className="flex-1 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1">
-                    <QrCode className="h-3.5 w-3.5" /> Recevoir
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Quick actions */}
-            <div className="grid grid-cols-4 gap-3">
-              {[
-                { icon: <PlusCircle className="h-5 w-5 text-amber-600" />, label: "Acheter", bg: "bg-amber-50", action: () => setTab("acheter") },
-                { icon: <Send className="h-5 w-5 text-indigo-600" />, label: "Envoyer", bg: "bg-indigo-50", action: () => { setTab("envoyer"); setSendMode("gift"); } },
-                { icon: <QrCode className="h-5 w-5 text-emerald-600" />, label: "Recevoir", bg: "bg-emerald-50", action: () => setTab("recevoir") },
-                { icon: <CreditCard className="h-5 w-5 text-purple-600" />, label: "Carte virtuelle", bg: "bg-purple-50", action: () => setTab("recevoir") },
-              ].map(a => (
-                <button key={a.label} onClick={a.action} className={`${a.bg} border border-slate-200 rounded-2xl p-4 flex flex-col items-center gap-2 hover:shadow-md transition-all group`}>
-                  {a.icon}
-                  <span className="text-[10px] font-bold text-slate-600 text-center leading-tight">{a.label}</span>
+                <button onClick={generateWallet} className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-sm transition-colors">
+                  Générer (Ed25519)
                 </button>
-              ))}
+              </div>
+            )}
+
+            {/* Solde Unique FSTART */}
+            <div className="bg-gradient-to-r from-[#1864FF] to-blue-500 rounded-3xl p-8 relative overflow-hidden shadow-xl text-white">
+              <div className="absolute top-0 right-0 h-64 w-64 bg-blue-400 rounded-full blur-3xl opacity-50 -mr-20 -mt-20"></div>
+              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-blue-200">Solde Total</span>
+                  <div className="flex items-baseline gap-3 mt-2">
+                    <span className="text-6xl font-black tracking-tighter">{balance.toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-blue-200">FSTART</span>
+                  </div>
+                  <p className="text-sm text-blue-100 mt-2 font-medium">Jetons pour la communauté.</p>
+                </div>
+              </div>
             </div>
 
-            {/* Transaction History */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-bold text-slate-900">Historique des transactions</h2>
-                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-semibold">{transactions.length} opérations</span>
+            {/* Transaction Ledger */}
+            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Registre des Transactions</h2>
+                </div>
+                <div className="h-8 px-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center text-xs font-bold text-slate-500">
+                  {transactions.length} Tx
+                </div>
               </div>
 
               {transactions.length === 0 ? (
-                <div className="py-16 text-center text-slate-400 text-sm">Aucune transaction pour le moment.</div>
+                <div className="py-16 text-center text-slate-500 text-sm">Le registre est vide.</div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {transactions.map(tx => (
-                    <div key={tx.id} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
-                      {/* Icon */}
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        tx.type === "ACHAT" ? "bg-emerald-50 text-emerald-600" :
-                        tx.type === "TRANSFERT" && tx.amountA < 0 ? "bg-amber-50 text-amber-600" :
-                        tx.type === "TRANSFERT" && tx.amountB > 0 ? "bg-indigo-50 text-indigo-600" :
-                        tx.type === "RETRAIT" ? "bg-rose-50 text-rose-600" :
-                        "bg-purple-50 text-purple-600"
+                    <div key={tx.id} className="flex items-center gap-6 px-8 py-5 hover:bg-slate-50 transition-colors">
+                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                        tx.amount > 0 ? "bg-green-50 border-green-100 text-green-600" : "bg-blue-50 border-blue-100 text-blue-600"
                       }`}>
-                        {tx.type === "ACHAT" ? <ArrowDownLeft className="h-5 w-5" /> :
-                         tx.type === "RETRAIT" ? <ArrowUpRight className="h-5 w-5" /> :
-                         tx.amountA < 0 ? <Send className="h-5 w-5" /> : <ArrowDownLeft className="h-5 w-5" />}
+                        {tx.amount > 0 ? <ArrowDownLeft className="h-5 w-5" /> : <Send className="h-5 w-5" />}
                       </div>
-                      {/* Details */}
+                      
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{tx.description}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{tx.date} {tx.fees ? `· Frais: ${tx.fees} Ar` : ""}</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">{tx.description}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold">{tx.type}</span>
+                          <span>{tx.date}</span>
+                        </div>
                       </div>
-                      {/* Amounts */}
-                      <div className="text-right shrink-0 space-y-0.5">
-                        {tx.amountA !== 0 && (
-                          <p className={`text-sm font-bold ${tx.amountA > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                            {tx.amountA > 0 ? "+" : ""}{tx.amountA} ⭐
-                          </p>
-                        )}
-                        {tx.amountB !== 0 && (
-                          <p className={`text-sm font-bold ${tx.amountB > 0 ? "text-indigo-600" : "text-rose-600"}`}>
-                            {tx.amountB > 0 ? "+" : ""}{tx.amountB.toLocaleString()} Ar
-                          </p>
-                        )}
+
+                      <div className="text-right shrink-0">
+                        <p className={`text-base font-black tracking-tight ${tx.amount > 0 ? "text-green-600" : "text-slate-900"}`}>
+                          {tx.amount > 0 ? "+" : ""}{tx.amount} FSTART
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-
           </div>
         )}
 
-        {/* ════════════════════════════════
-            TAB ACHETER
-        ════════════════════════════════ */}
         {tab === "acheter" && (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Acheter des F-Stars</h1>
-              <p className="text-sm text-slate-500 mt-1">Sélectionnez un pack pour encourager vos créateurs préférés.</p>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Acheter des FSTART</h1>
+              <p className="text-sm text-slate-500 mt-2">Rechargez votre compte FPay (Cash-In).</p>
             </div>
 
-            {/* CB Stripe packs */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-indigo-600" />
-                <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider">Paiement par Carte Bancaire (Stripe)</h2>
-              </div>
+            {/* STRIPE PAYMENT */}
+            <div className="space-y-5">
+              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-[#1864FF]" /> Paiement CB (Stripe)
+              </h2>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid sm:grid-cols-3 gap-6">
                 {[
-                  { label: "Pack Bronze", stars: 50, eur: 5, desc: "Idéal pour démarrer." },
-                  { label: "Pack Argent", stars: 120, eur: 10, desc: "Le plus populaire.", popular: true },
-                  { label: "Pack Or", stars: 300, eur: 25, desc: "Soutien VIP Premium." },
+                  { label: "Pack Débutant", fstart: 50, eur: 5 },
+                  { label: "Pack Populaire", fstart: 120, eur: 10, popular: true },
+                  { label: "Pack Avancé", fstart: 300, eur: 25 },
                 ].map(p => (
-                  <div
-                    key={p.label}
-                    className={`bg-white border rounded-2xl p-5 shadow-sm flex flex-col justify-between relative transition-all hover:shadow-md ${
-                      p.popular ? "border-indigo-400 ring-1 ring-indigo-400" : "border-slate-200"
-                    }`}
-                  >
+                  <div key={p.label} className={`bg-white border rounded-2xl p-6 flex flex-col justify-between relative transition-shadow hover:shadow-md ${
+                    p.popular ? "border-[#1864FF] ring-2 ring-blue-50 shadow-sm" : "border-slate-200"
+                  }`}>
                     {p.popular && (
-                      <span className="absolute -top-2.5 right-4 bg-indigo-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">Populaire</span>
+                      <div className="absolute -top-3 inset-x-0 flex justify-center">
+                        <span className="bg-[#1864FF] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Populaire</span>
+                      </div>
                     )}
                     <div>
-                      <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
-                        <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                      </div>
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded uppercase">{p.label}</span>
-                      <h3 className="text-2xl font-black text-slate-900 mt-2">{p.stars} F-Stars</h3>
-                      <p className="text-xs text-slate-500 mt-1">{p.desc}</p>
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{p.label}</span>
+                      <h3 className="text-3xl font-black text-slate-900 mt-1 tracking-tighter">{p.fstart} <span className="text-lg">FSTART</span></h3>
                     </div>
-                    <div className="mt-5">
-                      <p className="text-xl font-black text-slate-900 mb-3">{p.eur}.00 €</p>
+                    <div className="mt-8">
+                      <p className="text-xl font-bold text-[#1864FF] mb-4">{p.eur}.00 €</p>
                       <button
-                        onClick={() => { setPack({ stars: p.stars, eur: p.eur }); setShowStripe(true); }}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl py-2.5 transition-colors shadow-sm"
+                        onClick={() => { setPack({ fstart: p.fstart, eur: p.eur }); setShowStripe(true); }}
+                        className={`w-full font-bold text-sm rounded-xl py-3.5 transition-colors ${
+                          p.popular ? "bg-[#1864FF] hover:bg-blue-700 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"
+                        }`}
                       >
-                        Payer avec ma carte
+                        Sélectionner
                       </button>
                     </div>
                   </div>
                 ))}
-
-                {/* Custom Amount */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between relative transition-all hover:shadow-md">
-                  <div>
-                    <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-                      <PlusCircle className="h-5 w-5 text-indigo-500" />
-                    </div>
-                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded uppercase">Montant Libre</span>
-                    <h3 className="text-lg font-black text-slate-900 mt-2 leading-tight">Saisissez un montant</h3>
-                    <p className="text-[11px] text-slate-500 mt-1">10 F-Stars = 1.00 €.</p>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div className="relative">
-                      <input type="number" placeholder="Ex: 500" value={customStripeAmt} onChange={e => setCustomStripeAmt(e.target.value)} min={10}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-400" />
-                      <Star className="absolute right-3 top-3 h-4 w-4 text-amber-400 fill-amber-400" />
-                    </div>
-                    <button
-                      disabled={!customStripeAmt || parseFloat(customStripeAmt) < 10}
-                      onClick={() => { 
-                        const stars = parseFloat(customStripeAmt);
-                        setPack({ stars, eur: Math.ceil(stars / 10) }); 
-                        setShowStripe(true); 
-                        setCustomStripeAmt("");
-                      }}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold text-xs rounded-xl py-2.5 transition-colors shadow-sm"
-                    >
-                      {customStripeAmt && parseFloat(customStripeAmt) >= 10 ? `Payer ${Math.ceil(parseFloat(customStripeAmt) / 10)}.00 €` : "Payer avec ma carte"}
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
 
             {/* Mobile Money */}
-            <div className="space-y-4 pt-4 border-t border-slate-200">
-              <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-indigo-600" />
-                <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider">Recharge Mobile Money (Madagascar)</h2>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      Rechargez vos F-Stars directement via votre compte local. Taux : <strong className="text-indigo-700">1 F-Star = {exchangeRate} Ar</strong>
-                    </p>
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-2">
-                      <Info className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-500">Aucun frais d'entrée sur les recharges Mobile Money.</p>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleBuyMM} className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      {["Mvola", "Orange Money", "Airtel Money"].map(op => (
-                        <button key={op} type="button" onClick={() => setMmOp(op)}
-                          className={`py-2 text-[11px] font-bold rounded-xl border transition-all ${mmOp === op ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
-                          {op}
-                        </button>
-                      ))}
-                    </div>
-                    <input type="tel" placeholder="Numéro Mobile Money (ex: 034 00 000 00)" value={mmPhone} onChange={e => setMmPhone(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400" />
-                    <div className="relative">
-                      <input type="number" placeholder="Montant en Ariary" value={mmAmt} onChange={e => setMmAmt(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-16 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400" />
-                      <span className="absolute right-4 top-3.5 text-xs text-slate-400 font-bold">Ar</span>
-                    </div>
-                    {mmAmt && (
-                      <p className="text-xs text-indigo-700 font-semibold text-right">
-                        = {Math.floor(parseFloat(mmAmt) / exchangeRate)} F-Stars crédités
-                      </p>
-                    )}
-                    <button type="submit" disabled={mmLoading}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl py-3 transition-colors shadow-sm flex items-center justify-center gap-2">
-                      {mmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Valider la recharge"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ════════════════════════════════
-            TAB ENVOYER / RETIRER
-        ════════════════════════════════ */}
-        {tab === "envoyer" && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Envoyer & Retirer</h1>
-              <p className="text-sm text-slate-500 mt-1">Envoyez des F-Stars à quelqu'un ou retirez vos gains en Ariary.</p>
-            </div>
-
-            {/* Mode selector */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { key: "gift", label: "Envoyer un cadeau", icon: <Send className="h-5 w-5" />, color: "text-amber-600", bg: "bg-amber-50" },
-                { key: "mobile", label: "Retrait Mobile Money", icon: <Smartphone className="h-5 w-5" />, color: "text-indigo-600", bg: "bg-indigo-50" },
-                { key: "cash", label: "Retrait en Espèces", icon: <MapPin className="h-5 w-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
-              ].map(m => (
-                <button key={m.key} onClick={() => setSendMode(m.key as any)}
-                  className={`p-4 rounded-2xl border-2 text-center transition-all flex flex-col items-center gap-2 ${
-                    sendMode === m.key ? `border-indigo-600 bg-indigo-50` : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}>
-                  <div className={`h-10 w-10 rounded-xl ${m.bg} flex items-center justify-center ${m.color}`}>{m.icon}</div>
-                  <span className={`text-xs font-bold ${sendMode === m.key ? "text-indigo-700" : "text-slate-600"}`}>{m.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* GIFT MODE */}
-            {sendMode === "gift" && (
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="bg-amber-50 border-b border-amber-100 px-6 py-4">
-                  <h2 className="font-bold text-amber-900">Envoyer des F-Stars à un créateur</h2>
-                  <p className="text-xs text-amber-700 mt-0.5">Vos F-Stars disponibles : <strong>{bal.soldeA} ⭐</strong></p>
-                </div>
-                <form onSubmit={handleSendGift} className="p-6 space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Destinataire (email ou téléphone FPay)</label>
-                    <div className="relative">
-                      <Search className="h-4 w-4 absolute left-3.5 top-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="ex: clara.stream@fpay.mg ou 034 00 000 00"
-                        value={recipientQuery}
-                        onChange={e => setRecipientQuery(e.target.value)}
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                      />
-                    </div>
-                    <p className="text-[11px] text-slate-400">Entrez l'adresse email ou le numéro de téléphone enregistré sur FPay.</p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nombre de F-Stars à envoyer</label>
-                    <div className="relative">
-                      <Star className="h-4 w-4 absolute left-3.5 top-3.5 text-amber-500 fill-amber-500" />
-                      <input type="number" placeholder="ex: 50" value={giftAmt} onChange={e => setGiftAmt(e.target.value)} required min={1} max={bal.soldeA}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400" />
-                    </div>
-                    {giftAmt && (
-                      <p className="text-[11px] text-emerald-600 font-semibold">
-                        Le créateur recevra l'équivalent de {formatAr(parseFloat(giftAmt) * exchangeRate)} dans ses Gains.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Quick amounts */}
-                  <div>
-                    <p className="text-xs text-slate-500 mb-2 font-semibold">Montants rapides :</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[5, 10, 20, 50, 100].map(n => (
-                        <button key={n} type="button" onClick={() => setGiftAmt(String(n))}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                            giftAmt === String(n) ? "bg-amber-500 border-amber-500 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-amber-400"
-                          }`}>
-                          {n} ⭐
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={giftLoading}
-                    className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-slate-900 font-bold text-sm rounded-xl py-3 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    {giftLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4" /> Envoyer le cadeau</>}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* MOBILE MONEY WITHDRAWAL */}
-            {sendMode === "mobile" && (
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-4">
-                  <h2 className="font-bold text-indigo-900">Retrait vers Mobile Money</h2>
-                  <p className="text-xs text-indigo-700 mt-0.5">Gains disponibles : <strong>{formatAr(bal.soldeB)}</strong> · Frais de sortie : 2%</p>
-                </div>
-                <form onSubmit={handleWithdrawMM} className="p-6 space-y-5">
-                  <div className="grid grid-cols-3 gap-2">
-                    {["Mvola", "Orange Money", "Airtel Money"].map(op => (
-                      <button key={op} type="button" onClick={() => setWdOp(op)}
-                        className={`py-2.5 text-[11px] font-bold rounded-xl border transition-all ${wdOp === op ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
+            <div className="space-y-5 pt-8 border-t border-slate-200">
+              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-[#1864FF]" /> Mobile Money
+              </h2>
+              
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-xl shadow-sm">
+                <form onSubmit={handleBuyMM} className="space-y-5">
+                  <div className="grid grid-cols-3 gap-3">
+                    {["Mvola", "Orange", "Airtel"].map(op => (
+                      <button key={op} type="button" onClick={() => setMmOp(op)}
+                        className={`py-3 text-xs font-bold rounded-xl border transition-all ${
+                          mmOp === op ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        }`}>
                         {op}
                       </button>
                     ))}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Numéro Mobile Money de réception</label>
-                    <input type="tel" placeholder="034 00 000 00" value={wdPhone} onChange={e => setWdPhone(e.target.value)} required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Montant à retirer (Ariary)</label>
-                    <div className="relative">
-                      <input type="number" placeholder="ex: 50000" value={wdAmt} onChange={e => setWdAmt(e.target.value)} required min={1}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-16 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400" />
-                      <span className="absolute right-4 top-3.5 text-xs text-slate-400 font-bold">Ar</span>
-                    </div>
-                    {wdAmt && (
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-rose-500">Frais (2%) : {fee2(wdAmt)} Ar</span>
-                        <span className="text-emerald-600">Vous recevez : {formatAr((parseFloat(wdAmt) || 0) - fee2(wdAmt))}</span>
-                      </div>
-                    )}
-                  </div>
-                  <button type="submit" disabled={wdLoading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl py-3 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    {wdLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ArrowUpRight className="h-4 w-4" /> Valider le retrait</>}
+                  <input type="tel" placeholder="Numéro (ex: 034...)" value={mmPhone} onChange={e => setMmPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-900 focus:border-[#1864FF] focus:bg-white outline-none transition-colors" />
+                  <input type="number" placeholder="Montant en Ar" value={mmAmt} onChange={e => setMmAmt(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-900 focus:border-[#1864FF] focus:bg-white outline-none transition-colors" />
+                  
+                  <button type="submit" disabled={mmLoading}
+                    className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl py-4 transition-colors flex items-center justify-center gap-2">
+                    {mmLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Initier le paiement"}
                   </button>
                 </form>
               </div>
-            )}
-
-            {/* CASH POINT WITHDRAWAL */}
-            {sendMode === "cash" && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                  <div className="bg-emerald-50 border-b border-emerald-100 px-6 py-4">
-                    <h2 className="font-bold text-emerald-900">Retrait en Espèces</h2>
-                    <p className="text-xs text-emerald-700 mt-0.5">Gains disponibles : <strong>{formatAr(bal.soldeB)}</strong> · Frais : 3%</p>
-                  </div>
-                  <form onSubmit={handleWithdrawCash} className="p-6 space-y-5">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Point de retrait</label>
-                      <select value={cpLocation} onChange={e => setCpLocation(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 outline-none">
-                        <option>Supermaki Analakely</option>
-                        <option>Point Cash Ankorondrano</option>
-                        <option>Boutique FPay Tamatave Centre</option>
-                        <option>Point Service Majunga Bord</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Montant (Ariary)</label>
-                      <div className="relative">
-                        <input type="number" placeholder="ex: 100000" value={cpAmt} onChange={e => setCpAmt(e.target.value)} required
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-16 py-3 text-sm text-slate-700 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400" />
-                        <span className="absolute right-4 top-3.5 text-xs text-slate-400 font-bold">Ar</span>
-                      </div>
-                      {cpAmt && (
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-rose-500">Frais (3%) : {fee3(cpAmt)} Ar</span>
-                          <span className="text-emerald-600">Vous recevez : {formatAr((parseFloat(cpAmt) || 0) - fee3(cpAmt))}</span>
-                        </div>
-                      )}
-                    </div>
-                    <button type="submit" disabled={cpLoading}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold text-sm rounded-xl py-3 transition-colors shadow-sm flex items-center justify-center gap-2">
-                      {cpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><MapPin className="h-4 w-4" /> Générer le bon de retrait</>}
-                    </button>
-                  </form>
-                </div>
-
-                {/* Voucher */}
-                {voucher && (
-                  <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl p-6 shadow-lg space-y-4">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-indigo-300">Bon de Retrait Cash</p>
-                        <h3 className="font-black text-lg mt-0.5 tracking-widest font-mono">{voucher.code}</h3>
-                      </div>
-                      <Clock className="h-5 w-5 text-indigo-300" />
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-white/60">Boutique</span><span className="font-semibold">{voucher.location}</span></div>
-                      <div className="flex justify-between"><span className="text-white/60">Montant net</span><span className="font-black text-emerald-400">{formatAr(voucher.amount - voucher.fees)}</span></div>
-                      <div className="flex justify-between"><span className="text-white/60">Frais</span><span className="text-white/50">{formatAr(voucher.fees)}</span></div>
-                    </div>
-                    {/* Barcode visual */}
-                    <div className="bg-white rounded-xl p-3 flex flex-col items-center gap-1">
-                      <div className="w-full h-10 bg-slate-900 flex items-center justify-center font-mono text-[9px] text-white/30 tracking-[0.4em] select-none px-2">
-                        ||| || ||| | |||| || ||| | ||||||
-                      </div>
-                      <p className="text-[9px] font-mono font-bold text-slate-500 tracking-widest">{voucher.code}</p>
-                    </div>
-                    <p className="text-[10px] text-center text-white/40">Présentez ce bon au comptoir dans les 24 heures.</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ════════════════════════════════
-            TAB RECEVOIR
-        ════════════════════════════════ */}
-        {tab === "recevoir" && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Recevoir des F-Stars</h1>
-              <p className="text-sm text-slate-500 mt-1">Partagez votre QR code ou votre adresse pour recevoir des F-Stars et augmenter vos Gains.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-
-              {/* QR Display */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col items-center gap-5">
-                <div>
-                  <p className="text-center font-bold text-slate-900">{activeProfile.name}</p>
-                  <p className="text-center text-xs text-slate-500 mt-0.5">{activeProfile.role}</p>
-                </div>
-
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
-                  <div className="w-44 h-44 bg-slate-900 rounded-xl relative overflow-hidden flex items-center justify-center">
-                    <div className="absolute top-2 left-2 h-6 w-6 border-t-[3px] border-l-[3px] border-amber-400 rounded-tl-sm" />
-                    <div className="absolute top-2 right-2 h-6 w-6 border-t-[3px] border-r-[3px] border-amber-400 rounded-tr-sm" />
-                    <div className="absolute bottom-2 left-2 h-6 w-6 border-b-[3px] border-l-[3px] border-amber-400 rounded-bl-sm" />
-                    <div className="absolute bottom-2 right-2 h-6 w-6 border-b-[3px] border-r-[3px] border-amber-400 rounded-br-sm" />
-                    <div className="grid grid-cols-5 gap-1 w-28 h-28">
-                      {Array.from({ length: 25 }).map((_, i) => (
-                        <div key={i} className={`rounded-[2px] ${[0, 2, 4, 6, 8, 11, 14, 16, 18, 20, 22, 24].includes(i) ? "bg-amber-400" : "bg-slate-800"}`} />
-                      ))}
+            {/* Modal Stripe */}
+            {showStripe && pack && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+                  <button onClick={() => setShowStripe(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="h-6 w-6" /></button>
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Paiement Sécurisé</h3>
+                  <div className="bg-slate-50 rounded-2xl p-5 mb-6 flex justify-between items-center border border-slate-100">
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Total</p>
+                      <p className="text-2xl font-black text-slate-900">{pack.eur}.00 €</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Réception</p>
+                      <p className="text-lg font-bold text-[#1864FF]">{pack.fstart} FSTART</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Adresse FPay</p>
-                    <p className="text-sm font-mono font-semibold text-slate-700">{activeProfile.email}</p>
-                  </div>
-                  <button onClick={() => { navigator.clipboard.writeText(activeProfile.email); toast.success("Adresse copiée !"); }}
-                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-400 hover:text-slate-700">
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Config + Simulator */}
-              <div className="space-y-5">
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
-                  <h2 className="font-bold text-slate-800">Configurer ma demande</h2>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Montant en F-Stars (facultatif)</label>
-                    <div className="relative">
-                      <Star className="h-4 w-4 absolute left-3.5 top-3.5 text-amber-400 fill-amber-400" />
-                      <input type="number" placeholder="ex: 50" value={qrStars} onChange={e => setQrStars(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-400" />
+                  <form onSubmit={handleBuyCB} className="space-y-4">
+                    <input type="text" placeholder="Numéro de carte" required className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none" />
+                    <div className="flex gap-4">
+                      <input type="text" placeholder="MM/AA" required className="w-1/2 bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none" />
+                      <input type="text" placeholder="CVC" required className="w-1/2 bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none" />
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Motif</label>
-                    <input type="text" placeholder="ex: Support live du soir, Commande artiste..." value={qrNote} onChange={e => setQrNote(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-400" />
-                  </div>
-                </div>
-
-                <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 space-y-3">
-                  <h2 className="font-bold text-indigo-900 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-indigo-500" /> Simulateur de paiement
-                  </h2>
-                  <p className="text-xs text-indigo-700 leading-relaxed">
-                    Cliquez pour simuler un utilisateur qui scanne votre QR et vous envoie les F-Stars demandés. Vos Gains augmenteront immédiatement.
-                  </p>
-                  <button onClick={handleSimulateScan} disabled={scanLoading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl py-3 transition-colors flex items-center justify-center gap-2">
-                    {scanLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><QrCode className="h-4 w-4" /> Simuler la réception de {qrStars || "50"} F-Stars</>}
-                  </button>
-                </div>
-
-                {/* Card Generator */}
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
-                  <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-purple-500" /> Générer une Carte Virtuelle
-                  </h2>
-                  <p className="text-xs text-slate-500">Convertissez vos Gains en carte bancaire internationale (Visa/Mastercard).</p>
-                  <form onSubmit={handleGenCard} className="space-y-3">
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input type="number" placeholder="Montant en Ar" value={vcAmt} onChange={e => setVcAmt(e.target.value)} required
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-2.5 text-sm text-slate-700 outline-none focus:border-purple-400" />
-                        <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">Ar</span>
-                      </div>
-                      <select value={vcProv} onChange={e => setVcProv(e.target.value as any)}
-                        className="bg-slate-50 border border-slate-200 rounded-xl px-3 text-sm text-slate-700 outline-none">
-                        <option value="Visa">Visa</option>
-                        <option value="Mastercard">Mastercard</option>
-                      </select>
-                    </div>
-                    <button type="submit" disabled={vcLoading}
-                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-bold text-sm rounded-xl py-2.5 transition-colors flex items-center justify-center gap-2">
-                      {vcLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Créer ma carte"}
+                    <button type="submit" disabled={stripeLoading} className="w-full bg-[#1864FF] hover:bg-blue-700 text-white font-bold text-sm rounded-xl py-3.5 mt-4 transition-colors flex justify-center items-center">
+                      {stripeLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Payer ${pack.eur}.00 €`}
                     </button>
                   </form>
-                </div>
-              </div>
-            </div>
-
-            {/* Virtual Cards Display */}
-            {virtualCards.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="font-bold text-slate-800">Mes Cartes Virtuelles</h2>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {virtualCards.map((c, i) => (
-                    <div key={i} className={`rounded-2xl p-5 shadow-md flex flex-col justify-between h-36 relative overflow-hidden bg-gradient-to-br ${c.provider === "Visa" ? "from-indigo-600 to-blue-700" : "from-slate-700 to-slate-900"}`}>
-                      <div className="flex justify-between items-start">
-                        <span className="text-[10px] bg-white/20 text-white font-bold px-2 py-0.5 rounded uppercase">{c.provider}</span>
-                        <Shield className="h-5 w-5 text-white/30" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-mono tracking-widest text-white">{c.cardNumber}</p>
-                        <div className="flex gap-4 text-[10px] text-white/60 mt-1">
-                          <span>EXP <strong className="text-white">{c.expiry}</strong></span>
-                          <span>CVV <strong className="text-white">{c.cvv}</strong></span>
-                          <span className="ml-auto font-bold text-white">{c.amount.toLocaleString()} Ar</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* ════════════════════════════════
-            TAB PAYER (API Marchand)
-        ════════════════════════════════ */}
-        {tab === "payer" && (
-          <div className="space-y-8">
+        {tab === "envoyer" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Payer chez un Marchand</h1>
-              <p className="text-sm text-slate-500 mt-1">Démonstration du bouton de paiement FPay intégré sur un site e-commerce partenaire.</p>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Transférer (P2P)</h1>
+              <p className="text-sm text-slate-500 mt-2">Envoyez des FSTART directement à un autre membre.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-xl shadow-sm overflow-hidden">
+              <form onSubmit={handleSendGift} className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Destinataire (Email)</label>
+                  <input
+                    type="text"
+                    placeholder="Email du membre"
+                    value={recipientQuery}
+                    onChange={e => setRecipientQuery(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none transition-colors"
+                  />
+                </div>
 
-              {/* Simulated e-commerce */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="bg-slate-100 border-b border-slate-200 px-5 py-3 flex items-center gap-2 text-xs text-slate-500 font-semibold">
-                  <div className="flex gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-rose-400" />
-                    <div className="h-3 w-3 rounded-full bg-amber-400" />
-                    <div className="h-3 w-3 rounded-full bg-emerald-400" />
-                  </div>
-                  <span>shopmada.mg — Produit High-Tech</span>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Montant (FSTART)</label>
+                  <input type="number" placeholder="ex: 50" value={giftAmt} onChange={e => setGiftAmt(e.target.value)} required min={1} max={balance}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none transition-colors" />
                 </div>
-                <div className="p-6 space-y-5">
-                  <div className="flex gap-4 items-start">
-                    <div className="h-16 w-16 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-500 shadow-inner shrink-0">JBL</div>
-                    <div>
-                      <p className="text-[10px] text-indigo-600 font-bold uppercase">Audio High-End</p>
-                      <h3 className="font-black text-slate-900">{merchantItem.name}</h3>
-                      <p className="text-xs text-slate-500 mt-1">Casque Bluetooth, réduction de bruit active, autonomie 40h.</p>
-                    </div>
-                  </div>
-                  <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-400">Prix total</p>
-                      <p className="text-xl font-black text-slate-900">{formatAr(merchantItem.priceAr)}</p>
-                    </div>
-                    <button onClick={() => setShowMerchant(true)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl px-5 py-2.5 shadow-sm flex items-center gap-2 transition-colors">
-                      <Store className="h-4 w-4" /> Payer avec FPay
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              {/* Explanation */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
-                <h2 className="font-bold text-slate-800">Comment fonctionne le paiement marchand ?</h2>
-                <ul className="space-y-3 text-sm text-slate-500">
-                  {[
-                    "Le client paie avec ses F-Stars ou ses Gains.",
-                    "Le marchand est crédité instantanément sur son compte FPay.",
-                    "FPay prélève automatiquement 1.5% de commission sur chaque vente.",
-                    "Le marchand peut retirer ses revenus en Mobile Money à tout moment.",
-                  ].map((t, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <span className="h-5 w-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-                <div className="bg-slate-900 rounded-xl p-3 font-mono text-[10px] text-indigo-400 space-y-1">
-                  <p className="text-slate-500">// API FPay /checkout</p>
-                  <p>{"{ merchant_id: 'ShopMada',"}</p>
-                  <p>{"  amount_mga: 180000,"}</p>
-                  <p>{"  commission: 1.5%,"}</p>
-                  <p>{"  status: 'authorized' }"}</p>
+                <button type="submit" disabled={giftLoading}
+                  className="w-full bg-[#1864FF] hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl py-4 transition-colors shadow-sm flex items-center justify-center gap-2">
+                  {giftLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Signer et Envoyer (Ed25519)"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {tab === "recompenser" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Récompenser</h1>
+              <p className="text-sm text-slate-500 mt-2">Rémunérez un membre pour un service rendu à la communauté FPay.</p>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-xl shadow-sm overflow-hidden p-8">
+              <form onSubmit={handleReward} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Membre à récompenser</label>
+                  <select value={rewardRecipient} onChange={e => setRewardRecipient(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none">
+                    {Object.values(profiles).filter(p => p.id !== activeProfile.id).map(p => (
+                       <option key={p.id} value={p.id}>{p.name} - {p.role}</option>
+                    ))}
+                  </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Service rendu</label>
+                  <input type="text" placeholder="ex: Création d'illustration, modération, etc." value={rewardService} onChange={e => setRewardService(e.target.value)} required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none transition-colors" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Montant de la récompense</label>
+                  <input type="number" placeholder="Montant en FSTART" value={rewardAmt} onChange={e => setRewardAmt(e.target.value)} required max={balance}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none transition-colors" />
+                </div>
+                <button type="submit" disabled={rewardLoading}
+                  className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl py-4 transition-colors flex items-center justify-center gap-2">
+                  {rewardLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Signer et Récompenser (Ed25519)"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {tab === "sortie" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-end">
+              <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Sortie Externe</h1>
+                <p className="text-sm text-slate-500 mt-2">Poussez vos FSTART hors du système (Aucune conversion cash).</p>
               </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm max-w-xl">
+               <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-xl text-sm mb-6 flex items-start gap-3">
+                 <Shield className="h-5 w-5 shrink-0 mt-0.5" />
+                 <p>Cette action est définitive et expulsera vos jetons de la plateforme vers un environnement externe. Ce système n'est pas un retrait en espèces.</p>
+               </div>
+               
+               <form onSubmit={handleExternal} className="space-y-6">
+                 <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">FSTART à Sortir</label>
+                    <input type="number" placeholder="Montant à expulser" value={extAmt} onChange={e => setExtAmt(e.target.value)} required max={balance}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:border-[#1864FF] outline-none transition-colors" />
+                  </div>
+                  <button type="submit" disabled={extLoading}
+                    className="w-full bg-[#1864FF] hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl py-4 transition-colors flex items-center justify-center gap-2">
+                    {extLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmer la Sortie (Ed25519)"}
+                  </button>
+               </form>
             </div>
           </div>
         )}
 
       </main>
-
-      {/* ════ MODAL STRIPE ════ */}
-      {showStripe && pack && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">Stripe Secure Checkout</span>
-              </div>
-              <button onClick={() => setShowStripe(false)} className="text-slate-400 hover:text-slate-700 font-semibold text-xs">✕ Fermer</button>
-            </div>
-            <form onSubmit={handleBuyCB} className="p-5 space-y-4">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
-                <p className="text-[10px] text-indigo-500 font-bold uppercase">Pack sélectionné</p>
-                <p className="text-xl font-black text-slate-900 mt-1">{pack.stars} F-Stars</p>
-                <p className="text-2xl font-black text-indigo-600">{pack.eur}.00 €</p>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Numéro de carte</label>
-                  <input type="text" required placeholder="4242 4242 4242 4242" value={cardNo} onChange={e => setCardNo(e.target.value)}
-                    className="mt-1 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Expiration</label>
-                    <input type="text" required placeholder="MM/AA" value={cardExp} onChange={e => setCardExp(e.target.value)}
-                      className="mt-1 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">CVV</label>
-                    <input type="text" required placeholder="123" value={cardCvv} onChange={e => setCardCvv(e.target.value)}
-                      className="mt-1 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400" />
-                  </div>
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed bg-slate-50 border border-slate-100 rounded-xl p-3">
-                Facturation : <em>FPAY TOKENS MG</em>. Achat de crédits de soutien communautaire numérique. PCI-DSS conforme.
-              </p>
-              <button type="submit" disabled={stripeLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl py-3 flex items-center justify-center gap-2 shadow-sm">
-                {stripeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Payer ${pack.eur}.00 €`}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ════ MODAL MARCHAND ════ */}
-      {showMerchant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Store className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">Paiement FPay · ShopMada</span>
-              </div>
-              <button onClick={() => setShowMerchant(false)} className="text-slate-400 hover:text-slate-700 font-semibold text-xs">✕</button>
-            </div>
-            <form onSubmit={handleMerchantPay} className="p-5 space-y-4">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
-                <p className="text-[10px] text-indigo-500 font-bold uppercase">{merchantItem.name}</p>
-                <p className="text-2xl font-black text-indigo-600 mt-1">{formatAr(merchantItem.priceAr)}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Payer avec</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" onClick={() => setPaySource("SOLDE_A")}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${paySource === "SOLDE_A" ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-                    <Star className={`h-4 w-4 mb-1 ${paySource === "SOLDE_A" ? "text-amber-500 fill-amber-500" : "text-slate-400"}`} />
-                    <p className="text-[10px] font-black uppercase">Mes F-Stars</p>
-                    <p className="text-xs font-semibold text-slate-600 mt-0.5">{bal.soldeA} ⭐</p>
-                  </button>
-                  <button type="button" onClick={() => setPaySource("SOLDE_B")}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${paySource === "SOLDE_B" ? "border-indigo-400 bg-indigo-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-                    <Wallet className={`h-4 w-4 mb-1 ${paySource === "SOLDE_B" ? "text-indigo-600" : "text-slate-400"}`} />
-                    <p className="text-[10px] font-black uppercase">Mes Gains</p>
-                    <p className="text-xs font-semibold text-slate-600 mt-0.5">{formatAr(bal.soldeB)}</p>
-                  </button>
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                Le marchand reçoit {formatAr(Math.round(merchantItem.priceAr * 0.985))} après déduction de la commission FPay (1.5%).
-              </p>
-              <button type="submit" disabled={payLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl py-3 flex items-center justify-center gap-2 shadow-sm">
-                {payLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmer le paiement"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
-        © 2026 FPay Madagascar · Plateforme d'engagement communautaire
-      </footer>
     </div>
   );
 }

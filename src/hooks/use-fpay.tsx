@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import nacl from "tweetnacl";
+import util from "tweetnacl-util";
 
-export type ProfileId = "USER" | "CREATOR" | "MERCHANT";
+export type ProfileId = "USER" | "CREATOR" | "MEMBER";
 
 export interface Profile {
   id: ProfileId;
@@ -14,40 +16,32 @@ export interface Profile {
 export interface Transaction {
   id: string;
   date: string;
-  type: "ACHAT" | "TRANSFERT" | "RETRAIT" | "CARTE_VIRTUELLE" | "PAYEMENT_MARCHAND";
+  type: "ACHAT" | "TRANSFERT" | "RECOMPENSE" | "SORTIE";
   description: string;
-  amountA: number; // Modif de Solde A (F-Stars)
-  amountB: number; // Modif de Solde B (F-Credits / Ariary)
+  amount: number;
   senderName?: string;
   recipientName?: string;
   status: "COMPLETED" | "PENDING";
-  fees?: number; // Frais en Ariary
 }
 
-export interface VirtualCard {
-  cardNumber: string;
-  expiry: string;
-  cvv: string;
-  amount: number;
-  provider: "Visa" | "Mastercard";
-  status: "ACTIVE" | "USED";
+interface Wallet {
+  publicKey: string;
+  privateKey?: string;
 }
 
 interface FPayContextType {
   activeProfile: Profile;
   profiles: Record<ProfileId, Profile>;
-  balances: Record<ProfileId, { soldeA: number; soldeB: number }>;
+  balance: number;
+  balances: Record<ProfileId, number>;
   transactions: Transaction[];
-  virtualCards: VirtualCard[];
-  exchangeRate: number; // 1 F-Star = X Ariary
+  wallet: Wallet | null;
   changeProfile: (id: ProfileId) => void;
-  buyStarsCB: (stars: number, euro: number) => void;
-  buyStarsMobileMoney: (stars: number, ariary: number, operator: string, phone: string) => void;
-  transferP2P: (recipientId: ProfileId, stars: number) => boolean;
-  withdrawMobileMoney: (operator: string, phone: string, amountAr: number) => boolean;
-  withdrawCashPoint: (location: string, amountAr: number) => { code: string; fees: number } | null;
-  generateVirtualCard: (amountAr: number, provider: "Visa" | "Mastercard") => boolean;
-  payMerchant: (merchantId: ProfileId, source: "SOLDE_A" | "SOLDE_B", amountAr: number) => boolean;
+  generateWallet: () => void;
+  buyFstart: (fstart: number, method: "STRIPE" | "MOBILE_MONEY") => void;
+  transferP2P: (recipientId: ProfileId, fstart: number) => boolean;
+  rewardMember: (recipientId: ProfileId, fstart: number, serviceName: string) => boolean;
+  externalTransfer: (fstart: number) => boolean;
 }
 
 const FPayContext = createContext<FPayContextType | undefined>(undefined);
@@ -56,7 +50,7 @@ const PROFILES: Record<ProfileId, Profile> = {
   USER: {
     id: "USER",
     name: "Jean-Luc",
-    role: "Utilisateur Standard",
+    role: "Membre Communauté",
     avatar: "JL",
     email: "jeanluc@fpay.mg",
   },
@@ -67,19 +61,19 @@ const PROFILES: Record<ProfileId, Profile> = {
     avatar: "CS",
     email: "clara.stream@fpay.mg",
   },
-  MERCHANT: {
-    id: "MERCHANT",
-    name: "ShopMada",
-    role: "Marchand E-commerce",
-    avatar: "SM",
-    email: "contact@shopmada.mg",
+  MEMBER: {
+    id: "MEMBER",
+    name: "Olivia Art",
+    role: "Illustratrice 2D",
+    avatar: "OA",
+    email: "olivia.art@fpay.mg",
   },
 };
 
-const INITIAL_BALANCES: Record<ProfileId, { soldeA: number; soldeB: number }> = {
-  USER: { soldeA: 250, soldeB: 1500 },
-  CREATOR: { soldeA: 20, soldeB: 24000 },
-  MERCHANT: { soldeA: 0, soldeB: 85000 },
+const INITIAL_BALANCES: Record<ProfileId, number> = {
+  USER: 1500,
+  CREATOR: 24000,
+  MEMBER: 8500,
 };
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -87,32 +81,9 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "tx_1",
     date: "01/06/2026 14:32",
     type: "ACHAT",
-    description: "Achat Pack 120 Étoiles (CB via Stripe)",
-    amountA: 120,
-    amountB: 0,
+    description: "Achat Pack 500 FSTART (Stripe)",
+    amount: 500,
     status: "COMPLETED",
-    fees: 0,
-  },
-  {
-    id: "tx_2",
-    date: "31/05/2026 18:15",
-    type: "TRANSFERT",
-    description: "Soutien envoyé à Clara Stream",
-    amountA: -50,
-    amountB: 0,
-    senderName: "Jean-Luc",
-    recipientName: "Clara Stream",
-    status: "COMPLETED",
-  },
-  {
-    id: "tx_3",
-    date: "30/05/2026 10:00",
-    type: "RETRAIT",
-    description: "Retrait vers Mvola",
-    amountA: 0,
-    amountB: -50000,
-    status: "COMPLETED",
-    fees: 1000,
   },
 ];
 
@@ -120,340 +91,192 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeProfileId, setActiveProfileId] = useState<ProfileId>("USER");
   const [balances, setBalances] = useState(INITIAL_BALANCES);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
-  const [virtualCards, setVirtualCards] = useState<VirtualCard[]>([]);
-  const exchangeRate = 1; // 1 F-Star = 1 Ariary
+  const [wallet, setWallet] = useState<Wallet | null>(null);
 
   const activeProfile = PROFILES[activeProfileId];
+  const balance = balances[activeProfileId];
 
-  // Alterner de rôle
+  // Chargement du wallet depuis le localStorage (Proxy Visuel)
+  useEffect(() => {
+    const savedKey = localStorage.getItem(`fpay_wallet_${activeProfileId}`);
+    if (savedKey) {
+      try {
+        const secretKey = util.decodeBase64(savedKey);
+        const keyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
+        setWallet({
+          publicKey: util.encodeBase64(keyPair.publicKey),
+          privateKey: savedKey
+        });
+      } catch (e) {
+        console.error("Erreur lecture wallet", e);
+      }
+    } else {
+      setWallet(null);
+    }
+  }, [activeProfileId]);
+
   const changeProfile = (id: ProfileId) => {
     setActiveProfileId(id);
-    toast.info(`Profil changé : ${PROFILES[id].name} (${PROFILES[id].role})`);
+    toast.info(`Profil changé : ${PROFILES[id].name}`);
   };
 
-  // Obtenir la date courante formatée
+  // Génération de clé Ed25519 100% locale (Non-Custodial)
+  const generateWallet = () => {
+    const keyPair = nacl.sign.keyPair();
+    const privKeyStr = util.encodeBase64(keyPair.secretKey);
+    const pubKeyStr = util.encodeBase64(keyPair.publicKey);
+    localStorage.setItem(`fpay_wallet_${activeProfileId}`, privKeyStr);
+    setWallet({ publicKey: pubKeyStr, privateKey: privKeyStr });
+    toast.success("Nouveau portefeuille Ed25519 généré localement !");
+  };
+
   const getFormattedDate = () => {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, "0");
     return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
   };
 
-  // Acheter des F-Stars par CB (Stripe) -> Crédite le Solde A
-  const buyStarsCB = (stars: number, euro: number) => {
+  // 1. ACHAT (Cash-In)
+  const buyFstart = (fstart: number, method: "STRIPE" | "MOBILE_MONEY") => {
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: {
-        ...prev[activeProfileId],
-        soldeA: prev[activeProfileId].soldeA + stars,
-      },
+      [activeProfileId]: prev[activeProfileId] + fstart,
     }));
 
     const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
       type: "ACHAT",
-      description: `Achat Pack ${stars} F-Stars (Stripe CB)`,
-      amountA: stars,
-      amountB: 0,
+      description: `Acquisition ${fstart} FSTART via ${method}`,
+      amount: fstart,
       status: "COMPLETED",
-      fees: 0,
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Succès ! Pack de ${stars} F-Stars ajouté à votre Solde d'Envoi (Stripe CB).`);
+    toast.success(`Succès ! ${fstart} FSTART ajoutés via ${method}.`);
   };
 
-  // Acheter des F-Stars par Mobile Money -> Crédite le Solde A
-  const buyStarsMobileMoney = (stars: number, ariary: number, operator: string, phone: string) => {
-    setBalances((prev) => ({
-      ...prev,
-      [activeProfileId]: {
-        ...prev[activeProfileId],
-        soldeA: prev[activeProfileId].soldeA + stars,
-      },
-    }));
-
-    const newTx: Transaction = {
-      id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-      date: getFormattedDate(),
-      type: "ACHAT",
-      description: `Achat ${stars} F-Stars via ${operator} (${phone})`,
-      amountA: stars,
-      amountB: 0,
-      status: "COMPLETED",
-      fees: 0,
-    };
-
-    setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Succès ! ${stars} F-Stars ajoutés via ${operator}.`);
+  // Helper interne pour signer localement (Ed25519)
+  const signPayload = (payload: string) => {
+    if (!wallet || !wallet.privateKey) throw new Error("Wallet introuvable");
+    const secretKey = util.decodeBase64(wallet.privateKey);
+    const msg = util.decodeUTF8(payload);
+    const signature = nacl.sign(msg, secretKey);
+    return util.encodeBase64(signature);
   };
 
-  // Transfert P2P (FPay vers FPay) -> Débite Solde A chez l'émetteur, Crédite Solde B (F-Credits) chez le récepteur
-  const transferP2P = (recipientId: ProfileId, stars: number): boolean => {
-    if (balances[activeProfileId].soldeA < stars) {
-      toast.error("Solde d'Envoi (F-Stars) insuffisant.");
+  // 2. TRANSFERT INTERNE (P2P)
+  const transferP2P = (recipientId: ProfileId, fstart: number): boolean => {
+    if (!wallet) {
+      toast.error("Générez votre wallet local avant de transférer.");
+      return false;
+    }
+    if (balances[activeProfileId] < fstart) {
+      toast.error("Solde FSTART insuffisant.");
       return false;
     }
 
-    const ariaryEquivalent = stars * exchangeRate;
+    try {
+      // Signature cryptographique locale (Nonce + Payload)
+      const nonce = Date.now().toString();
+      const payload = `${activeProfileId}-${recipientId}-${fstart}-${nonce}`;
+      const sig = signPayload(payload);
+      console.log(`[Proxy] Signature locale Ed25519 générée : ${sig.substring(0, 20)}...`);
+    } catch (e) {
+      toast.error("Erreur lors de la signature locale.");
+      return false;
+    }
 
-    setBalances((prev) => {
-      // Débiter l'émetteur (Solde A)
-      const senderNewA = prev[activeProfileId].soldeA - stars;
-      
-      // Créditer le récepteur (Solde B en Ariary)
-      const recipientNewB = prev[recipientId].soldeB + ariaryEquivalent;
-
-      return {
-        ...prev,
-        [activeProfileId]: { ...prev[activeProfileId], soldeA: senderNewA },
-        [recipientId]: { ...prev[recipientId], soldeB: recipientNewB },
-      };
-    });
+    setBalances((prev) => ({
+      ...prev,
+      [activeProfileId]: prev[activeProfileId] - fstart,
+      [recipientId]: prev[recipientId] + fstart,
+    }));
 
     const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
       type: "TRANSFERT",
-      description: `Transfert de ${stars} F-Stars vers ${PROFILES[recipientId].name}`,
-      amountA: -stars,
-      amountB: 0,
+      description: `Transfert Interne vers ${PROFILES[recipientId].name}`,
+      amount: -fstart,
       senderName: activeProfile.name,
       recipientName: PROFILES[recipientId].name,
       status: "COMPLETED",
     };
 
-    // Ajouter aussi la transaction reçue pour le destinataire dans l'historique
-    const newTxRecipient: Transaction = {
+    setTransactions((prev) => [newTx, ...prev]);
+    toast.success(`Transfert réussi ! ${fstart} FSTART envoyés.`);
+    return true;
+  };
+
+  // 3. RECOMPENSER (L'Économie des Services)
+  const rewardMember = (recipientId: ProfileId, fstart: number, serviceName: string): boolean => {
+    if (!wallet) {
+      toast.error("Générez votre wallet local d'abord.");
+      return false;
+    }
+    if (balances[activeProfileId] < fstart) {
+      toast.error("Solde FSTART insuffisant.");
+      return false;
+    }
+
+    try {
+      // Signature locale pour la récompense
+      const sig = signPayload(`${activeProfileId}-REWARD-${recipientId}-${fstart}`);
+      console.log(`[Proxy] Récompense signée : ${sig.substring(0, 20)}...`);
+    } catch (e) {
+      return false;
+    }
+
+    setBalances((prev) => ({
+      ...prev,
+      [activeProfileId]: prev[activeProfileId] - fstart,
+      [recipientId]: prev[recipientId] + fstart,
+    }));
+
+    const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
-      type: "TRANSFERT",
-      description: `Reçu de ${activeProfile.name} (Soutien converted)`,
-      amountA: 0,
-      amountB: ariaryEquivalent,
+      type: "RECOMPENSE",
+      description: `Récompense rendue pour : ${serviceName}`,
+      amount: -fstart,
       senderName: activeProfile.name,
       recipientName: PROFILES[recipientId].name,
       status: "COMPLETED",
     };
 
-    setTransactions((prev) => [newTx, newTxRecipient, ...prev]);
-    toast.success(`Transfert réussi ! ${stars} F-Stars envoyés à ${PROFILES[recipientId].name} (${ariaryEquivalent} Ar crédités sur ses Gains).`);
+    setTransactions((prev) => [newTx, ...prev]);
+    toast.success(`Récompense envoyée ! ${fstart} FSTART offerts.`);
     return true;
   };
 
-  // Retrait vers Mobile Money -> Débite Solde B
-  const withdrawMobileMoney = (operator: string, phone: string, amountAr: number): boolean => {
-    const fee = Math.round(amountAr * 0.02); // 2% de frais
-    const totalDeducted = amountAr + fee;
-
-    if (balances[activeProfileId].soldeB < totalDeducted) {
-      toast.error(`Solde de Gains insuffisant. Il vous faut ${totalDeducted} Ar (y compris ${fee} Ar de frais).`);
+  // 4. TRANSFERT EXTERNE (Sortie)
+  const externalTransfer = (fstart: number) => {
+    if (!wallet) {
+      toast.error("Générez votre wallet local d'abord.");
+      return false;
+    }
+    if (balances[activeProfileId] < fstart) {
+      toast.error(`Solde FSTART insuffisant.`);
       return false;
     }
 
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: {
-        ...prev[activeProfileId],
-        soldeB: prev[activeProfileId].soldeB - totalDeducted,
-      },
+      [activeProfileId]: prev[activeProfileId] - fstart,
     }));
 
     const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
-      type: "RETRAIT",
-      description: `Retrait Mobile Money (${operator} - ${phone})`,
-      amountA: 0,
-      amountB: -amountAr,
-      status: "COMPLETED",
-      fees: fee,
-    };
-
-    setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Retrait de ${amountAr} Ar initié avec succès vers ${phone} (Frais: ${fee} Ar).`);
-    return true;
-  };
-
-  // Retrait en Point Cash -> Débite Solde B
-  const withdrawCashPoint = (location: string, amountAr: number) => {
-    const fee = Math.round(amountAr * 0.03); // 3% de frais en point cash
-    const totalDeducted = amountAr + fee;
-
-    if (balances[activeProfileId].soldeB < totalDeducted) {
-      toast.error(`Solde de Gains insuffisant. Il vous faut ${totalDeducted} Ar (y compris ${fee} Ar de frais).`);
-      return null;
-    }
-
-    setBalances((prev) => ({
-      ...prev,
-      [activeProfileId]: {
-        ...prev[activeProfileId],
-        soldeB: prev[activeProfileId].soldeB - totalDeducted,
-      },
-    }));
-
-    const code = `VOUCH-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const newTx: Transaction = {
-      id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-      date: getFormattedDate(),
-      type: "RETRAIT",
-      description: `Bon Cash généré pour retrait à ${location}`,
-      amountA: 0,
-      amountB: -amountAr,
-      status: "PENDING",
-      fees: fee,
-    };
-
-    setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Bon de retrait généré ! Présentez le code ${code} à ${location}.`);
-    return { code, fees: fee };
-  };
-
-  // Générer une Carte Bleue Virtuelle -> Débite Solde B
-  const generateVirtualCard = (amountAr: number, provider: "Visa" | "Mastercard"): boolean => {
-    if (balances[activeProfileId].soldeB < amountAr) {
-      toast.error("Solde de Gains insuffisant pour approvisionner cette carte.");
-      return false;
-    }
-
-    setBalances((prev) => ({
-      ...prev,
-      [activeProfileId]: {
-        ...prev[activeProfileId],
-        soldeB: prev[activeProfileId].soldeB - amountAr,
-      },
-    }));
-
-    // Créer la carte
-    const cardNumber = `${provider === "Visa" ? "4" : "5"}${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`;
-    const expiry = "12/28";
-    const cvv = `${Math.floor(100 + Math.random() * 900)}`;
-
-    const newCard: VirtualCard = {
-      cardNumber,
-      expiry,
-      cvv,
-      amount: amountAr,
-      provider,
-      status: "ACTIVE",
-    };
-
-    setVirtualCards((prev) => [newCard, ...prev]);
-
-    const newTx: Transaction = {
-      id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-      date: getFormattedDate(),
-      type: "CARTE_VIRTUELLE",
-      description: `Génération Carte Virtuelle ${provider} (Débit Gains)`,
-      amountA: 0,
-      amountB: -amountAr,
+      type: "SORTIE",
+      description: `Transfert Externe (FStart sortis du système)`,
+      amount: -fstart,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Votre carte virtuelle ${provider} créditée de ${amountAr} Ar a été créée !`);
-    return true;
-  };
-
-  // Payer un marchand via l'API Marchand -> Débite Solde A ou B de l'acheteur, Crédite Solde B du marchand (moins 1.5% frais)
-  const payMerchant = (merchantId: ProfileId, source: "SOLDE_A" | "SOLDE_B", amountAr: number): boolean => {
-    const fee = Math.round(amountAr * 0.015); // 1.5% frais marchand
-    const creditAmount = amountAr - fee;
-
-    if (source === "SOLDE_A") {
-      const starsNeeded = amountAr / exchangeRate;
-      if (balances[activeProfileId].soldeA < starsNeeded) {
-        toast.error(`Solde d'Envoi insuffisant. Il vous faut ${starsNeeded} F-Stars.`);
-        return false;
-      }
-
-      setBalances((prev) => ({
-        ...prev,
-        [activeProfileId]: {
-          ...prev[activeProfileId],
-          soldeA: prev[activeProfileId].soldeA - starsNeeded,
-        },
-        [merchantId]: {
-          ...prev[merchantId],
-          soldeB: prev[merchantId].soldeB + creditAmount,
-        },
-      }));
-
-      const newTx: Transaction = {
-        id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-        date: getFormattedDate(),
-        type: "PAYEMENT_MARCHAND",
-        description: `Paiement API Marchand (${PROFILES[merchantId].name}) - Source F-Stars`,
-        amountA: -starsNeeded,
-        amountB: 0,
-        senderName: activeProfile.name,
-        recipientName: PROFILES[merchantId].name,
-        status: "COMPLETED",
-      };
-
-      const newTxMerchant: Transaction = {
-        id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-        date: getFormattedDate(),
-        type: "PAYEMENT_MARCHAND",
-        description: `Encaissement API Marchand - Reçu de ${activeProfile.name}`,
-        amountA: 0,
-        amountB: creditAmount,
-        senderName: activeProfile.name,
-        recipientName: PROFILES[merchantId].name,
-        status: "COMPLETED",
-        fees: fee,
-      };
-
-      setTransactions((prev) => [newTx, newTxMerchant, ...prev]);
-    } else {
-      if (balances[activeProfileId].soldeB < amountAr) {
-        toast.error(`Solde de Gains insuffisant. Il vous faut ${amountAr} Ar.`);
-        return false;
-      }
-
-      setBalances((prev) => ({
-        ...prev,
-        [activeProfileId]: {
-          ...prev[activeProfileId],
-          soldeB: prev[activeProfileId].soldeB - amountAr,
-        },
-        [merchantId]: {
-          ...prev[merchantId],
-          soldeB: prev[merchantId].soldeB + creditAmount,
-        },
-      }));
-
-      const newTx: Transaction = {
-        id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-        date: getFormattedDate(),
-        type: "PAYEMENT_MARCHAND",
-        description: `Paiement API Marchand (${PROFILES[merchantId].name}) - Source Gains`,
-        amountA: 0,
-        amountB: -amountAr,
-        senderName: activeProfile.name,
-        recipientName: PROFILES[merchantId].name,
-        status: "COMPLETED",
-      };
-
-      const newTxMerchant: Transaction = {
-        id: `tx_${Math.random().toString(36).substr(2, 9)}`,
-        date: getFormattedDate(),
-        type: "PAYEMENT_MARCHAND",
-        description: `Encaissement API Marchand - Reçu de ${activeProfile.name}`,
-        amountA: 0,
-        amountB: creditAmount,
-        senderName: activeProfile.name,
-        recipientName: PROFILES[merchantId].name,
-        status: "COMPLETED",
-        fees: fee,
-      };
-
-      setTransactions((prev) => [newTx, newTxMerchant, ...prev]);
-    }
-
-    toast.success(`Paiement marchand de ${amountAr} Ar effectué. Le marchand a été crédité de ${creditAmount} Ar (Frais: ${fee} Ar).`);
+    toast.success(`${fstart} FSTART ont été expulsés du système vers l'externe.`);
     return true;
   };
 
@@ -462,18 +285,16 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         activeProfile,
         profiles: PROFILES,
+        balance,
         balances,
         transactions,
-        virtualCards,
-        exchangeRate,
+        wallet,
         changeProfile,
-        buyStarsCB,
-        buyStarsMobileMoney,
+        generateWallet,
+        buyFstart,
         transferP2P,
-        withdrawMobileMoney,
-        withdrawCashPoint,
-        generateVirtualCard,
-        payMerchant,
+        rewardMember,
+        externalTransfer,
       }}
     >
       {children}
@@ -488,3 +309,4 @@ export const useFPay = () => {
   }
   return context;
 };
+
