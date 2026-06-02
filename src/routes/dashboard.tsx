@@ -118,25 +118,14 @@ export function Dashboard() {
     }, 1500);
   }
 
-  function handleExternal(e: React.FormEvent) {
-    e.preventDefault();
-    const fstarts = parseFloat(extAmt);
-    if (!fstarts) { toast.error("Entrez la valeur à sortir."); return; }
-    setExtLoading(true);
-    setTimeout(() => {
-      externalTransfer(fstarts);
-      setExtLoading(false);
-      setExtAmt("");
-      setTab("home");
-    }, 1500);
-  }
+
 
   const actionButtons = [
     { key: "acheter", label: "Achat", icon: <PlusCircle /> },
     { key: "recevoir", label: "Recevoir", icon: <QrCode /> },
     { key: "envoyer", label: "Envoi", icon: <Send /> },
     { key: "recompenser", label: "Récomp.", icon: <Star /> },
-    { key: "sortie", label: "Sortie", icon: <LogOut /> },
+
   ];
 
   const bottomNavItems = [
@@ -643,28 +632,6 @@ export function Dashboard() {
                        )}
                      </div>
                    </div>
-                )}
-
-                {tab === "sortie" && (
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Sortie</h1>
-                      <p className="text-sm text-slate-500 mt-2">Poussez vos FSTART hors du système.</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-[2rem] p-6 md:p-8 shadow-sm">
-                      <div className="bg-red-50 text-red-700 p-4 rounded-xl text-xs font-bold mb-6">Irreversible. Ceci n'est pas un retrait cash.</div>
-                      <form onSubmit={handleExternal} className="space-y-5">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Montant à sortir</label>
-                          <input type="number" placeholder="0" value={extAmt} onChange={e => setExtAmt(e.target.value)} required max={balance}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-xl font-black focus:border-red-500 outline-none" />
-                        </div>
-                        <button type="submit" disabled={extLoading} className="w-full bg-red-600 disabled:opacity-50 text-white font-bold text-sm rounded-xl py-4 shadow-sm flex items-center justify-center">
-                          {extLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmer (Ed25519)"}
-                        </button>
-                      </form>
-                    </div>
-                  </div>
                 )}
               </div>
             )}
