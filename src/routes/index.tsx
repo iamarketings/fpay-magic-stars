@@ -4,15 +4,12 @@ import {
   Menu,
   X,
   ArrowRight,
-  Sparkles,
-  Users,
-  HelpCircle,
-  ChevronDown,
   Heart,
   Star,
-  Share2,
+  Send,
   Lock,
-  Send
+  HelpCircle,
+  ChevronDown
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
@@ -56,7 +53,7 @@ function Index() {
       [name]: prev[name] + amount,
     }));
     toast.success(`Soutien simulé : +${amount} FSTART envoyés à ${name}.`, {
-      description: "Ils pourront utiliser ces FSTART dans notre écosystème.",
+      description: "Transaction signée avec Ed25519 en local.",
     });
   };
 
@@ -74,10 +71,23 @@ function Index() {
       a: "Non. FPay fonctionne strictement en circuit fermé pour assurer une sécurité maximale. Aucune logique de retrait en cash ou de paiement marchand direct n'existe sur le réseau.",
     },
     {
-      q: "Comment fonctionne le programme d'affiliation communautaire ?",
-      a: "Vous pouvez inviter vos connaissances à rejoindre FPay en partageant votre lien de parrainage. Pour chaque nouvel utilisateur actif, vous recevez un bonus en FSTART directement sur votre portefeuille Ed25519 local !",
-    },
+      q: "Comment est assurée la sécurité de mon portefeuille ?",
+      a: "FPay est non-custodial. Vos clés cryptographiques (Ed25519) sont générées et stockées uniquement sur votre appareil. Nous n'avons jamais accès à vos fonds.",
+    }
   ];
+
+  const navLinks = [
+    { label: "Accueil", href: "#accueil" },
+    { label: "Services", href: "#services" },
+    { label: "Créateurs", href: "#createurs" },
+    { label: "FAQ", href: "#faq" }
+  ];
+
+  const scrollTo = (href: string) => {
+    setMenuOpen(false);
+    const el = document.querySelector(href);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-white text-slate-600 flex flex-col font-sans selection:bg-blue-500/30">
@@ -94,10 +104,14 @@ function Index() {
           <Logo />
           
           <ul className="hidden md:flex items-center gap-8">
-            {["Accueil", "Créateurs", "Affiliation", "Services"].map((item) => (
-              <li key={item}>
-                <a href={`#`} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">
-                  {item}
+            {navLinks.map((item) => (
+              <li key={item.label}>
+                <a 
+                  href={item.href} 
+                  onClick={(e) => { e.preventDefault(); scrollTo(item.href); }} 
+                  className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
+                >
+                  {item.label}
                 </a>
               </li>
             ))}
@@ -118,14 +132,38 @@ function Index() {
             </Link>
           </div>
 
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-slate-400 hover:text-blue-600">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-slate-400 hover:text-blue-600 focus:outline-none">
             {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </nav>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="md:hidden absolute top-24 left-0 w-full bg-white border-b border-slate-100 shadow-xl px-6 py-4 flex flex-col gap-4 animate-in slide-in-from-top-2">
+            {navLinks.map((item) => (
+              <a 
+                key={item.label}
+                href={item.href}
+                onClick={(e) => { e.preventDefault(); scrollTo(item.href); }}
+                className="text-lg font-bold text-slate-700 py-2 border-b border-slate-50"
+              >
+                {item.label}
+              </a>
+            ))}
+            <div className="flex flex-col gap-3 pt-4">
+               <Link to="/dashboard" className="w-full text-center rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 px-6 py-4">
+                 Mode Sandbox
+               </Link>
+               <Link to="/dashboard" className="w-full text-center rounded-xl bg-blue-600 text-sm font-bold text-white px-6 py-4 shadow-md">
+                 Accéder au Wallet
+               </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden pt-24 pb-32">
+      <section id="accueil" className="relative overflow-hidden pt-24 pb-32">
         {/* Glow effects */}
         <div className="absolute top-1/4 -left-32 h-[500px] w-[500px] rounded-full bg-blue-100 blur-[120px] -z-10" />
         <div className="absolute bottom-0 right-0 h-[600px] w-[600px] rounded-full bg-blue-50 blur-[120px] -z-10" />
@@ -196,7 +234,7 @@ function Index() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-32 relative z-10 border-t border-slate-100 bg-slate-50">
+      <section id="services" className="py-32 relative z-10 border-t border-slate-100 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 space-y-16">
           
           <div className="text-center max-w-3xl mx-auto space-y-6">
@@ -246,9 +284,12 @@ function Index() {
       </section>
 
       {/* Interactive Creators */}
-      <section className="py-32 relative bg-white">
+      <section id="createurs" className="py-32 relative bg-white">
         <div className="max-w-7xl mx-auto px-6 space-y-16">
           <div className="text-center max-w-2xl mx-auto space-y-6">
+            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
+              Soutien Direct
+            </span>
             <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Testez le soutien P2P</h2>
             <p className="text-slate-500">Simulez le transfert de FSTART et voyez la popularité d'un membre augmenter en temps réel.</p>
           </div>
@@ -286,10 +327,13 @@ function Index() {
       </section>
 
       {/* FAQ */}
-      <section className="py-32 bg-slate-50 border-y border-slate-200">
+      <section id="faq" className="py-32 bg-slate-50 border-y border-slate-200">
         <div className="max-w-3xl mx-auto px-6 space-y-12">
           <div className="text-center space-y-4">
-            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Questions Fréquentes</h2>
+            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
+              Foire Aux Questions
+            </span>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Tout savoir sur FPay</h2>
           </div>
 
           <div className="space-y-4">
@@ -297,7 +341,7 @@ function Index() {
               <div key={idx} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
                 <button
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full px-6 py-5 flex items-center justify-between font-bold text-slate-800 text-left hover:bg-slate-50 transition-colors"
+                  className="w-full px-6 py-5 flex items-center justify-between font-bold text-slate-800 text-left hover:bg-slate-50 transition-colors focus:outline-none"
                 >
                   <span className="flex items-center gap-4">
                     <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
@@ -306,7 +350,7 @@ function Index() {
                   <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${activeFaq === idx ? "rotate-180" : ""}`} />
                 </button>
                 {activeFaq === idx && (
-                  <div className="px-6 pb-6 pt-2 text-sm text-slate-600 leading-relaxed border-t border-slate-100 mt-2">
+                  <div className="px-6 pb-6 pt-2 text-sm text-slate-600 leading-relaxed border-t border-slate-100 mt-2 animate-in slide-in-from-top-2">
                     {faq.a}
                   </div>
                 )}
@@ -321,7 +365,7 @@ function Index() {
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white" />
         <div className="relative z-10 max-w-2xl mx-auto px-6 space-y-8">
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Prêt à rejoindre l'écosystème ?</h2>
-          <p className="text-slate-500">Expérimentez le réseau fermé FPay via notre Dashboard Sandbox.</p>
+          <p className="text-slate-500 text-lg">Expérimentez le réseau fermé FPay via notre Dashboard Sandbox, découvrez le fonctionnement des clés locales Ed25519.</p>
           <Link
             to="/dashboard"
             className="inline-flex items-center justify-center rounded-2xl bg-blue-600 text-white font-black px-10 py-5 shadow-lg shadow-blue-600/30 hover:scale-105 transition-all duration-300"
