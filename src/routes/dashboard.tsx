@@ -20,6 +20,7 @@ import {
   Search,
   Bell
 } from "lucide-react";
+import fstartLogo from "@/assets/fstart-logo.jpg";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -399,7 +400,10 @@ function Dashboard() {
                       {/* Overview Card */}
                       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-8">
-                          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Solde Disponible</span>
+                          <div className="flex items-center gap-3">
+                            <img src={fstartLogo} alt="FStart Logo" className="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-yellow-400/20" />
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Solde Disponible</span>
+                          </div>
                           <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">Réseau Local</span>
                         </div>
                         <div>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
+import fstartLogo from "@/assets/fstart-logo.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -74,7 +75,7 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-white text-slate-600 flex flex-col font-sans selection:bg-blue-500/30">
-      
+
       {/* Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white text-center py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-2">
         <Lock className="h-4 w-4 text-blue-200" />
@@ -85,13 +86,13 @@ function Index() {
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100">
         <nav className="mx-auto max-w-7xl px-6 h-24 flex items-center justify-between">
           <Logo />
-          
+
           <ul className="hidden md:flex items-center gap-8">
             {navLinks.map((item) => (
               <li key={item.label}>
-                <a 
-                  href={item.href} 
-                  onClick={(e) => { e.preventDefault(); scrollTo(item.href); }} 
+                <a
+                  href={item.href}
+                  onClick={(e) => { e.preventDefault(); scrollTo(item.href); }}
                   className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
                 >
                   {item.label}
@@ -124,7 +125,7 @@ function Index() {
         {menuOpen && (
           <div className="md:hidden absolute top-24 left-0 w-full bg-white border-b border-slate-100 shadow-xl px-6 py-4 flex flex-col gap-4 animate-in slide-in-from-top-2">
             {navLinks.map((item) => (
-              <a 
+              <a
                 key={item.label}
                 href={item.href}
                 onClick={(e) => { e.preventDefault(); scrollTo(item.href); }}
@@ -134,12 +135,12 @@ function Index() {
               </a>
             ))}
             <div className="flex flex-col gap-3 pt-4">
-               <Link to="/dashboard" className="w-full text-center rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 px-6 py-4">
-                 Mode Sandbox
-               </Link>
-               <Link to="/dashboard" className="w-full text-center rounded-xl bg-blue-600 text-sm font-bold text-white px-6 py-4 shadow-md">
-                 Accéder au Wallet
-               </Link>
+              <Link to="/dashboard" className="w-full text-center rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 px-6 py-4">
+                Mode Sandbox
+              </Link>
+              <Link to="/dashboard" className="w-full text-center rounded-xl bg-blue-600 text-sm font-bold text-white px-6 py-4 shadow-md">
+                Accéder au Wallet
+              </Link>
             </div>
           </div>
         )}
@@ -152,18 +153,18 @@ function Index() {
         <div className="absolute bottom-0 right-0 h-[600px] w-[600px] rounded-full bg-blue-50 blur-[120px] -z-10" />
 
         <div className="relative mx-auto max-w-7xl px-6 grid lg:grid-cols-12 gap-16 items-center">
-          
+
           <div className="lg:col-span-6 space-y-10 text-center lg:text-left z-10">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-1.5 text-xs font-bold text-blue-600">
               <Shield className="h-4 w-4" />
               <span>Réseau communautaire fermé (Non-Custodial)</span>
             </div>
-            
+
             <h1 className="text-5xl lg:text-7xl font-black tracking-tighter text-slate-900 leading-[1.1]">
               L'écosystème de votre <br />
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">communauté</span>
             </h1>
-            
+
             <p className="text-lg text-slate-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
               Obtenez des <strong className="text-blue-600">FStart</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
             </p>
@@ -219,7 +220,7 @@ function Index() {
       {/* Features Grid */}
       <section id="services" className="py-32 relative z-10 border-t border-slate-100 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 space-y-16">
-          
+
           <div className="text-center max-w-3xl mx-auto space-y-6">
             <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
               L'écosystème FPay
@@ -303,8 +304,8 @@ function Index() {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-blue-50 rounded-[3rem] transform rotate-3 scale-105 -z-10"></div>
             <div className="bg-white border border-slate-200 p-12 rounded-[3rem] shadow-xl text-center space-y-6">
-              <div className="inline-flex items-center justify-center h-24 w-24 bg-blue-600 rounded-full shadow-[0_0_40px_rgba(37,99,235,0.4)] text-white">
-                <Star className="h-10 w-10 fill-white" />
+              <div className="inline-flex items-center justify-center h-32 w-32 rounded-full overflow-hidden shadow-[0_0_40px_rgba(250,204,21,0.4)] ring-4 ring-yellow-400/20">
+                <img src={fstartLogo} alt="FStart Logo" className="h-full w-full object-cover" />
               </div>
               <h3 className="text-2xl font-black text-slate-900">Le moteur de FPay</h3>
               <p className="text-slate-500 text-sm">
@@ -365,7 +366,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-slate-200 py-8 text-center text-xs text-slate-500 bg-slate-50">
-        <p>© 2026 FPay. Réseau Communautaire Fermé (Non-Custodial).</p>
+        <p>© 2026 FPay. Réseau Communautaire.</p>
       </footer>
     </div>
   );
