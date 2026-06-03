@@ -398,7 +398,7 @@ function Dashboard() {
                       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-8">
                           <div className="flex items-center gap-3">
-                            <img src={fstartLogo} alt="FStart Logo" className="h-8 w-8 rounded-full object-cover shadow-sm" />
+                            <img src={fstartLogo} alt="FStart Logo" className="h-10 w-10 object-contain mix-blend-multiply" />
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Solde Disponible</span>
                           </div>
                           <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">Réseau Local</span>
