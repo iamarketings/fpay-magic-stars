@@ -190,7 +190,7 @@ function Dashboard() {
       setPurchaseStep("AMOUNT");
       setPurchaseAmount("");
       setMmPhone("");
-      toast.success(`${amt} FSTART générés avec succès !`);
+      toast.success(`${amt} Fstart générés avec succès !`);
       setTab("home");
     }, 1500);
   }
@@ -282,7 +282,7 @@ function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">
-                      {tx.type === "BUY" ? "Achat FSTART" :
+                      {tx.type === "BUY" ? "Achat Fstart" :
                        tx.type === "IN" ? "Réception" :
                        tx.type === "OUT" ? "Transfert P2P" : "Récompense"}
                     </p>
@@ -291,7 +291,7 @@ function Dashboard() {
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-bold ${tx.type === "IN" || tx.type === "BUY" ? "text-green-600" : "text-slate-900"}`}>
-                    {tx.type === "IN" || tx.type === "BUY" ? "+" : "-"}{tx.amount} FSTART
+                    {tx.type === "IN" || tx.type === "BUY" ? "+" : "-"}{tx.amount} Fstart
                   </p>
                   <p className="text-[10px] text-slate-400 mt-1">{new Date(tx.date).toLocaleDateString()}</p>
                 </div>
@@ -404,7 +404,7 @@ function Dashboard() {
                         </div>
                         <div>
                           <h2 className="text-4xl md:text-5xl font-black text-slate-900 tabular-nums tracking-tight">
-                            {balance.toLocaleString()} <span className="text-xl text-slate-400">FSTART</span>
+                            {balance.toLocaleString()} <span className="text-xl text-slate-400">Fstart</span>
                           </h2>
                           <div className="mt-4 flex items-center gap-2">
                             <span className="text-xs font-mono text-slate-500 truncate w-48">{wallet.publicKey}</span>
@@ -534,11 +534,11 @@ function Dashboard() {
                     
                     {tab === "acheter" && (
                       <div className="space-y-6">
-                        <h2 className="text-xl font-bold text-slate-900">Acheter des FSTART</h2>
+                        <h2 className="text-xl font-bold text-slate-900">Acheter des Fstart</h2>
                         {purchaseStep === "AMOUNT" ? (
                           <div className="space-y-4">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-500">Montant (FSTART)</label>
+                              <label className="text-xs font-bold text-slate-500">Montant (Fstart)</label>
                               <input type="number" min="1" value={purchaseAmount} onChange={e => setPurchaseAmount(e.target.value ? parseFloat(e.target.value) : "")} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-lg font-bold focus:border-[#1864FF] outline-none" placeholder="1000" />
                             </div>
                             <button onClick={() => { if(purchaseAmount) setPurchaseStep("PAYMENT"); else toast.error("Entrez un montant"); }} className="w-full bg-[#1864FF] text-white font-bold py-3 rounded-lg shadow-sm">Continuer</button>
@@ -562,7 +562,7 @@ function Dashboard() {
 
                     {tab === "recevoir" && (
                       <div className="text-center space-y-6">
-                        <h2 className="text-xl font-bold text-slate-900">Recevoir des FSTART</h2>
+                        <h2 className="text-xl font-bold text-slate-900">Recevoir des Fstart</h2>
                         {!wallet ? (
                           <p className="text-orange-600 text-sm font-bold">Générez vos clés d'abord.</p>
                         ) : (
@@ -590,7 +590,7 @@ function Dashboard() {
                           <button type="button" onClick={() => setRecipientNetwork("MADASTARS")} className={`py-2 rounded-lg border text-xs font-bold ${recipientNetwork === "MADASTARS" ? "border-[#1864FF] bg-blue-50 text-[#1864FF]" : "border-slate-200 bg-slate-50 text-slate-600"}`}>MadaStars</button>
                         </div>
                         <input type="text" placeholder="Clé publique destinataire..." value={recipientQuery} onChange={e => setRecipientQuery(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-mono focus:border-[#1864FF] outline-none" />
-                        <input type="number" min="1" placeholder="Montant FSTART" value={giftAmt} onChange={e => setGiftAmt(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-lg font-bold focus:border-[#1864FF] outline-none" />
+                        <input type="number" min="1" placeholder="Montant Fstart" value={giftAmt} onChange={e => setGiftAmt(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-lg font-bold focus:border-[#1864FF] outline-none" />
                         <button type="submit" disabled={giftLoading || !wallet} className="w-full bg-[#1864FF] text-white font-bold py-3 rounded-lg mt-2 shadow-sm">
                           {giftLoading ? "Signature..." : "Envoyer"}
                         </button>
@@ -608,7 +608,7 @@ function Dashboard() {
                           <option value="art">Création Artistique</option>
                           <option value="dev">Développement Outils</option>
                         </select>
-                        <input type="number" min="1" placeholder="Montant FSTART" value={rewardAmt} onChange={e => setRewardAmt(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-lg font-bold focus:border-[#1864FF] outline-none" />
+                        <input type="number" min="1" placeholder="Montant Fstart" value={rewardAmt} onChange={e => setRewardAmt(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-lg font-bold focus:border-[#1864FF] outline-none" />
                         <button type="submit" disabled={rewardLoading || !wallet} className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg mt-2 shadow-sm">
                           {rewardLoading ? "Signature..." : "Récompenser"}
                         </button>

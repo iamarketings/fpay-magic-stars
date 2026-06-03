@@ -81,7 +81,7 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "tx_1",
     date: "01/06/2026 14:32",
     type: "ACHAT",
-    description: "Achat Pack 500 FSTART (Stripe)",
+    description: "Achat Pack 500 Fstart (Stripe)",
     amount: 500,
     status: "COMPLETED",
   },
@@ -147,13 +147,13 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
       type: "ACHAT",
-      description: `Acquisition ${fstart} FSTART via ${method}`,
+      description: `Acquisition ${fstart} Fstart via ${method}`,
       amount: fstart,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Succès ! ${fstart} FSTART ajoutés via ${method}.`);
+    toast.success(`Succès ! ${fstart} Fstart ajoutés via ${method}.`);
   };
 
   // Helper interne pour signer localement (Ed25519)
@@ -172,7 +172,7 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
     if (balances[activeProfileId] < fstart) {
-      toast.error("Solde FSTART insuffisant.");
+      toast.error("Solde Fstart insuffisant.");
       return false;
     }
 
@@ -205,7 +205,7 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Transfert réussi ! ${fstart} FSTART envoyés.`);
+    toast.success(`Transfert réussi ! ${fstart} Fstart envoyés.`);
     return true;
   };
 
@@ -216,7 +216,7 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
     if (balances[activeProfileId] < fstart) {
-      toast.error("Solde FSTART insuffisant.");
+      toast.error("Solde Fstart insuffisant.");
       return false;
     }
 

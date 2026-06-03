@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FPay — Le Réseau de Soutien Numérique" },
-      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Obtenez des FSTART et animez la communauté." },
+      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Obtenez des Fstart et animez la communauté." },
     ],
   }),
   component: Index,
@@ -42,15 +42,15 @@ function Index() {
 
   const faqs = [
     {
-      q: "Que sont les FSTART ?",
-      a: "Les FSTART sont l'unique unité de valeur circulant sur notre plateforme. Ce sont des jetons numériques utilisés par les membres pour échanger des services et se récompenser au sein de la communauté.",
+      q: "Que sont les Fstart ?",
+      a: "Les Fstart sont l'unique unité de valeur circulant sur notre plateforme. Ce sont des jetons numériques utilisés par les membres pour échanger des services et se récompenser au sein de la communauté.",
     },
     {
-      q: "Comment les membres de la communauté peuvent-ils utiliser leurs FSTART ?",
-      a: "Vos FSTART peuvent être transférés instantanément à d'autres membres (P2P), ou utilisés pour récompenser quelqu'un pour un service rendu à la communauté FPay.",
+      q: "Comment les membres de la communauté peuvent-ils utiliser leurs Fstart ?",
+      a: "Vos Fstart peuvent être transférés instantanément à d'autres membres (P2P), ou utilisés pour récompenser quelqu'un pour un service rendu à la communauté FPay.",
     },
     {
-      q: "Peut-on convertir les FSTART en espèces (Cash-out) ?",
+      q: "Peut-on convertir les Fstart en espèces (Cash-out) ?",
       a: "Non. FPay fonctionne strictement en circuit fermé pour assurer une sécurité maximale. Aucune logique de retrait en cash ou de paiement marchand direct n'existe sur le réseau.",
     },
     {
@@ -164,7 +164,7 @@ function Index() {
             </h1>
             
             <p className="text-lg text-slate-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Obtenez des <strong className="text-blue-600">FSTART</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
+              Obtenez des <strong className="text-blue-600">Fstart</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
@@ -180,7 +180,7 @@ function Index() {
             <div className="pt-8 border-t border-slate-100 flex justify-center lg:justify-start gap-12 text-sm text-slate-500">
               <div><strong className="block text-2xl font-black text-slate-900">10k+</strong> Membres Actifs</div>
               <div className="w-px h-12 bg-slate-200"></div>
-              <div><strong className="block text-2xl font-black text-blue-600">1.2M</strong> FSTART échangés</div>
+              <div><strong className="block text-2xl font-black text-blue-600">1.2M</strong> Fstart échangés</div>
             </div>
           </div>
 
@@ -224,10 +224,10 @@ function Index() {
               L'écosystème FPay
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
-              Le portefeuille de votre communauté
+              Soutien à la communauté
             </h2>
             <p className="text-slate-500 text-lg leading-relaxed">
-              Découvrez toutes les possibilités offertes par le jeton FSTART, 100% géré localement.
+              Découvrez toutes les possibilités offertes par le jeton Fstart, 100% géré localement.
             </p>
           </div>
 
@@ -238,7 +238,7 @@ function Index() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Soutien aux créateurs</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Envoyez des FSTART instantanément. La transaction est signée avec vos clés locales et le membre peut directement les utiliser sur le réseau.
+                Envoyez des Fstart instantanément. La transaction est signée avec vos clés locales et le membre peut directement les utiliser sur le réseau.
               </p>
             </div>
 
@@ -248,7 +248,7 @@ function Index() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Récompense de services</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Utilisez vos FSTART pour rémunérer un service rendu à la communauté (modération, art, entraide) via un transfert direct.
+                Utilisez vos Fstart pour rémunérer un service rendu à la communauté (modération, art, entraide) via un transfert direct.
               </p>
             </div>
 
