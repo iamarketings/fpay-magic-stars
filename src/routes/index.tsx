@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,22 +40,6 @@ function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  const [creatorStars, setCreatorStars] = useState({
-    clara: 1420,
-    jean: 850,
-    olivia: 2115,
-  });
-
-  const handleSupportCreator = (name: "clara" | "jean" | "olivia", amount: number) => {
-    setCreatorStars((prev) => ({
-      ...prev,
-      [name]: prev[name] + amount,
-    }));
-    toast.success(`Soutien simulé : +${amount} FSTART envoyés à ${name}.`, {
-      description: "Transaction signée avec Ed25519 en local.",
-    });
-  };
-
   const faqs = [
     {
       q: "Que sont les FSTART ?",
@@ -79,7 +62,6 @@ function Index() {
   const navLinks = [
     { label: "Accueil", href: "#accueil" },
     { label: "Services", href: "#services" },
-    { label: "Créateurs", href: "#createurs" },
     { label: "FAQ", href: "#faq" }
   ];
 
@@ -279,49 +261,6 @@ function Index() {
                 Échangez vos jetons librement et en toute sécurité avec n'importe quel autre membre du réseau grâce aux clés cryptographiques.
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Creators */}
-      <section id="createurs" className="py-32 relative bg-white">
-        <div className="max-w-7xl mx-auto px-6 space-y-16">
-          <div className="text-center max-w-2xl mx-auto space-y-6">
-            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
-              Soutien Direct
-            </span>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Testez le soutien P2P</h2>
-            <p className="text-slate-500">Simulez le transfert de FSTART et voyez la popularité d'un membre augmenter en temps réel.</p>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-8">
-            {[
-              { id: "clara", name: "Clara Stream", role: "Gaming & Vibe", score: creatorStars.clara, color: "from-blue-400 to-blue-600", initials: "CS" },
-              { id: "jean", name: "Jean Gaming", role: "Pro Esports", score: creatorStars.jean, color: "from-blue-500 to-indigo-600", initials: "JG" },
-              { id: "olivia", name: "Olivia Art", role: "Illustratrice 2D", score: creatorStars.olivia, color: "from-sky-400 to-blue-500", initials: "OA" },
-            ].map(c => (
-              <div key={c.id} className="bg-white border border-slate-200 p-8 rounded-3xl flex flex-col items-center text-center relative hover:shadow-xl transition-shadow">
-                <div className={`h-20 w-20 rounded-full bg-gradient-to-br ${c.color} flex items-center justify-center font-black text-white text-2xl mb-4 shadow-md`}>
-                  {c.initials}
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">{c.name}</h3>
-                <span className="text-xs font-bold text-blue-600 uppercase tracking-widest mt-1 mb-6">{c.role}</span>
-                
-                <div className="w-full bg-slate-50 rounded-2xl p-4 flex justify-between items-center border border-slate-100 mb-6">
-                  <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Solde FSTART</span>
-                  <span className="font-black text-slate-900 text-lg flex items-center gap-2">{c.score} <Star className="h-4 w-4 text-blue-500 fill-blue-500"/></span>
-                </div>
-
-                <div className="w-full flex gap-2">
-                  <button onClick={() => handleSupportCreator(c.id as any, 10)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 border border-slate-200">
-                    <Heart className="h-4 w-4 text-slate-400" /> +10
-                  </button>
-                  <button onClick={() => handleSupportCreator(c.id as any, 50)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
-                    <Star className="h-4 w-4 text-white fill-white" /> +50
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
