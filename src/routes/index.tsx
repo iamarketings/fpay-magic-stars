@@ -62,6 +62,7 @@ function Index() {
   const navLinks = [
     { label: "Accueil", href: "#accueil" },
     { label: "Services", href: "#services" },
+    { label: "Fstart", href: "#fstart" },
     { label: "FAQ", href: "#faq" }
   ];
 
@@ -259,6 +260,55 @@ function Index() {
               <h3 className="text-xl font-bold text-slate-900 mb-3">Transfert P2P</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
                 Échangez vos jetons librement et en toute sécurité avec n'importe quel autre membre du réseau grâce aux clés cryptographiques.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Qu'est-ce que Fstart ? */}
+      <section id="fstart" className="py-32 relative bg-white">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
+              Le Jeton
+            </span>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+              Qu'est-ce que Fstart ?
+            </h2>
+            <p className="text-lg text-slate-500 leading-relaxed">
+              Fstart est l'unité de valeur au cœur de l'écosystème FPay. Conçu pour récompenser l'engagement, il permet aux membres de la communauté de s'échanger des services, de soutenir les créateurs et de transférer de la valeur de manière fluide et sécurisée.
+            </p>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Star className="h-4 w-4" />
+                </div>
+                <span className="text-slate-700 font-bold">Unité d'échange exclusive et sécurisée</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Shield className="h-4 w-4" />
+                </div>
+                <span className="text-slate-700 font-bold">Circuit fermé : pas de cash-out</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Heart className="h-4 w-4" />
+                </div>
+                <span className="text-slate-700 font-bold">Récompensez le soutien et l'entraide</span>
+              </li>
+            </ul>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-blue-50 rounded-[3rem] transform rotate-3 scale-105 -z-10"></div>
+            <div className="bg-white border border-slate-200 p-12 rounded-[3rem] shadow-xl text-center space-y-6">
+              <div className="inline-flex items-center justify-center h-24 w-24 bg-blue-600 rounded-full shadow-[0_0_40px_rgba(37,99,235,0.4)] text-white">
+                <Star className="h-10 w-10 fill-white" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900">Le moteur de FPay</h3>
+              <p className="text-slate-500 text-sm">
+                Plus vous participez à la communauté, plus vous pouvez accumuler et utiliser des Fstart.
               </p>
             </div>
           </div>
