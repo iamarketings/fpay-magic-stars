@@ -13,14 +13,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
-import fstartLogo from "@/assets/fstart-logo.jpg";
+import fstarLogo from "@/assets/fstar-logo.jpg";
 import fpayLogo from "@/assets/fpay-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FPay — Le Réseau de Soutien Numérique" },
-      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Obtenez des FStart et animez la communauté." },
+      { name: "description", content: "Soutenez vos créateurs préférés avec FPay. Obtenez des FStar et animez la communauté." },
     ],
   }),
   component: Index,
@@ -40,15 +40,15 @@ function Index() {
 
   const faqs = [
     {
-      q: "Que sont les FStart ?",
-      a: "Les FStart sont l'unique unité de valeur circulant sur notre plateforme. Ce sont des jetons numériques utilisés par les membres pour échanger des services et se récompenser au sein de la communauté.",
+      q: "Que sont les FStar ?",
+      a: "Les FStar sont l'unique unité de valeur circulant sur notre plateforme. Ce sont des jetons numériques utilisés par les membres pour échanger des services et se récompenser au sein de la communauté.",
     },
     {
-      q: "Comment les membres de la communauté peuvent-ils utiliser leurs FStart ?",
-      a: "Vos FStart peuvent être transférés instantanément à d'autres membres (P2P), ou utilisés pour récompenser quelqu'un pour un service rendu à la communauté FPay.",
+      q: "Comment les membres de la communauté peuvent-ils utiliser leurs FStar ?",
+      a: "Vos FStar peuvent être transférés instantanément à d'autres membres (P2P), ou utilisés pour récompenser quelqu'un pour un service rendu à la communauté FPay.",
     },
     {
-      q: "Peut-on convertir les FStart en espèces (Cash-out) ?",
+      q: "Peut-on convertir les FStar en espèces (Cash-out) ?",
       a: "Non. FPay fonctionne strictement en circuit fermé pour assurer une sécurité maximale. Aucune logique de retrait en cash ou de paiement marchand direct n'existe sur le réseau.",
     },
     {
@@ -60,7 +60,7 @@ function Index() {
   const navLinks = [
     { label: "Accueil", href: "#accueil" },
     { label: "Services", href: "#services" },
-    { label: "FStart", href: "#fstart" },
+    { label: "FStar", href: "#fstar" },
     { label: "FAQ", href: "#faq" }
   ];
 
@@ -163,7 +163,7 @@ function Index() {
             </h1>
 
             <p className="text-lg text-slate-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Obtenez des <strong className="text-blue-600">FStart</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
+              Obtenez des <strong className="text-blue-600">FStar</strong>, soutenez vos créateurs, transférez des jetons entre membres et récompensez les services au sein de notre communauté exclusive.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
@@ -179,7 +179,7 @@ function Index() {
             <div className="pt-8 border-t border-slate-100 flex justify-center lg:justify-start gap-12 text-sm text-slate-500">
               <div><strong className="block text-2xl font-black text-slate-900">10k+</strong> Membres Actifs</div>
               <div className="w-px h-12 bg-slate-200"></div>
-              <div><strong className="block text-2xl font-black text-blue-600">1.2M</strong> FStart échangés</div>
+              <div><strong className="block text-2xl font-black text-blue-600">1.2M</strong> FStar échangés</div>
             </div>
           </div>
 
@@ -226,7 +226,7 @@ function Index() {
               Soutien à la communauté
             </h2>
             <p className="text-slate-500 text-lg leading-relaxed">
-              Découvrez toutes les possibilités offertes par le jeton FStart, 100% géré localement.
+              Découvrez toutes les possibilités offertes par le jeton FStar, 100% géré localement.
             </p>
           </div>
 
@@ -237,7 +237,7 @@ function Index() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Soutien aux créateurs</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Envoyez des FStart instantanément. La transaction est signée avec vos clés locales et le membre peut directement les utiliser sur le réseau.
+                Envoyez des FStar instantanément. La transaction est signée avec vos clés locales et le membre peut directement les utiliser sur le réseau.
               </p>
             </div>
 
@@ -247,7 +247,7 @@ function Index() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Récompense de services</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Utilisez vos FStart pour rémunérer un service rendu à la communauté (modération, art, entraide) via un transfert direct.
+                Utilisez vos FStar pour rémunérer un service rendu à la communauté (modération, art, entraide) via un transfert direct.
               </p>
             </div>
 
@@ -264,18 +264,18 @@ function Index() {
         </div>
       </section>
 
-      {/* Qu'est-ce que FStart ? */}
-      <section id="fstart" className="py-32 relative bg-white">
+      {/* Qu'est-ce que FStar ? */}
+      <section id="fstar" className="py-32 relative bg-white">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
               Le Jeton
             </span>
             <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
-              Qu'est-ce que FStart ?
+              Qu'est-ce que FStar ?
             </h2>
             <p className="text-lg text-slate-500 leading-relaxed">
-              FStart est l'unité de valeur au cœur de l'écosystème FPay. Conçu pour récompenser l'engagement, il permet aux membres de la communauté de s'échanger des services, de soutenir les créateurs et de transférer de la valeur de manière fluide et sécurisée.
+              FStar est l'unité de valeur au cœur de l'écosystème FPay. Conçu pour récompenser l'engagement, il permet aux membres de la communauté de s'échanger des services, de soutenir les créateurs et de transférer de la valeur de manière fluide et sécurisée.
             </p>
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
@@ -301,10 +301,10 @@ function Index() {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-blue-50 rounded-[3rem] transform rotate-3 scale-105 -z-10"></div>
             <div className="bg-white border border-slate-200 p-12 rounded-[3rem] shadow-xl text-center space-y-6">
-              <img src={fstartLogo} alt="FStart Logo" className="h-40 w-40 object-contain mx-auto mix-blend-multiply" />
+              <img src={fstarLogo} alt="FStar Logo" className="h-40 w-40 object-contain mx-auto mix-blend-multiply" />
               <h3 className="text-2xl font-black text-slate-900">Le moteur de FPay</h3>
               <p className="text-slate-500 text-sm">
-                Plus vous participez à la communauté, plus vous pouvez accumuler et utiliser des FStart.
+                Plus vous participez à la communauté, plus vous pouvez accumuler et utiliser des FStar.
               </p>
             </div>
           </div>

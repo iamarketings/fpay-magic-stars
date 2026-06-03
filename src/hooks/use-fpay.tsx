@@ -38,10 +38,10 @@ interface FPayContextType {
   wallet: Wallet | null;
   changeProfile: (id: ProfileId) => void;
   generateWallet: () => void;
-  buyFstart: (fstart: number, method: "STRIPE" | "MOBILE_MONEY") => void;
-  transferP2P: (recipientId: ProfileId, fstart: number) => boolean;
-  rewardMember: (recipientId: ProfileId, fstart: number, serviceName: string) => boolean;
-  externalTransfer: (fstart: number) => boolean;
+  buyFstart: (fstar: number, method: "STRIPE" | "MOBILE_MONEY") => void;
+  transferP2P: (recipientId: ProfileId, fstar: number) => boolean;
+  rewardMember: (recipientId: ProfileId, fstar: number, serviceName: string) => boolean;
+  externalTransfer: (fstar: number) => boolean;
 }
 
 const FPayContext = createContext<FPayContextType | undefined>(undefined);
@@ -81,7 +81,7 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "tx_1",
     date: "01/06/2026 14:32",
     type: "ACHAT",
-    description: "Achat Pack 500 FStart (Stripe)",
+    description: "Achat Pack 500 FStar (Stripe)",
     amount: 500,
     status: "COMPLETED",
   },
@@ -137,23 +137,23 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 1. ACHAT (Cash-In)
-  const buyFstart = (fstart: number, method: "STRIPE" | "MOBILE_MONEY") => {
+  const buyFstart = (fstar: number, method: "STRIPE" | "MOBILE_MONEY") => {
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: prev[activeProfileId] + fstart,
+      [activeProfileId]: prev[activeProfileId] + fstar,
     }));
 
     const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
       type: "ACHAT",
-      description: `Acquisition ${fstart} FStart via ${method}`,
-      amount: fstart,
+      description: `Acquisition ${fstar} FStar via ${method}`,
+      amount: fstar,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Succès ! ${fstart} FStart ajoutés via ${method}.`);
+    toast.success(`Succès ! ${fstar} FStar ajoutés via ${method}.`);
   };
 
   // Helper interne pour signer localement (Ed25519)
@@ -166,20 +166,20 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 2. TRANSFERT INTERNE (P2P)
-  const transferP2P = (recipientId: ProfileId, fstart: number): boolean => {
+  const transferP2P = (recipientId: ProfileId, fstar: number): boolean => {
     if (!wallet) {
       toast.error("Générez votre wallet local avant de transférer.");
       return false;
     }
-    if (balances[activeProfileId] < fstart) {
-      toast.error("Solde FStart insuffisant.");
+    if (balances[activeProfileId] < fstar) {
+      toast.error("Solde FStar insuffisant.");
       return false;
     }
 
     try {
       // Signature cryptographique locale (Nonce + Payload)
       const nonce = Date.now().toString();
-      const payload = `${activeProfileId}-${recipientId}-${fstart}-${nonce}`;
+      const payload = `${activeProfileId}-${recipientId}-${fstar}-${nonce}`;
       const sig = signPayload(payload);
       console.log(`[Proxy] Signature locale Ed25519 générée : ${sig.substring(0, 20)}...`);
     } catch (e) {
@@ -189,8 +189,8 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: prev[activeProfileId] - fstart,
-      [recipientId]: prev[recipientId] + fstart,
+      [activeProfileId]: prev[activeProfileId] - fstar,
+      [recipientId]: prev[recipientId] + fstar,
     }));
 
     const newTx: Transaction = {
@@ -198,31 +198,31 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       date: getFormattedDate(),
       type: "TRANSFERT",
       description: `Transfert Interne vers ${PROFILES[recipientId].name}`,
-      amount: -fstart,
+      amount: -fstar,
       senderName: activeProfile.name,
       recipientName: PROFILES[recipientId].name,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Transfert réussi ! ${fstart} FStart envoyés.`);
+    toast.success(`Transfert réussi ! ${fstar} FStar envoyés.`);
     return true;
   };
 
   // 3. RECOMPENSER (L'Économie des Services)
-  const rewardMember = (recipientId: ProfileId, fstart: number, serviceName: string): boolean => {
+  const rewardMember = (recipientId: ProfileId, fstar: number, serviceName: string): boolean => {
     if (!wallet) {
       toast.error("Générez votre wallet local d'abord.");
       return false;
     }
-    if (balances[activeProfileId] < fstart) {
-      toast.error("Solde FStart insuffisant.");
+    if (balances[activeProfileId] < fstar) {
+      toast.error("Solde FStar insuffisant.");
       return false;
     }
 
     try {
       // Signature locale pour la récompense
-      const sig = signPayload(`${activeProfileId}-REWARD-${recipientId}-${fstart}`);
+      const sig = signPayload(`${activeProfileId}-REWARD-${recipientId}-${fstar}`);
       console.log(`[Proxy] Récompense signée : ${sig.substring(0, 20)}...`);
     } catch (e) {
       return false;
@@ -230,8 +230,8 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: prev[activeProfileId] - fstart,
-      [recipientId]: prev[recipientId] + fstart,
+      [activeProfileId]: prev[activeProfileId] - fstar,
+      [recipientId]: prev[recipientId] + fstar,
     }));
 
     const newTx: Transaction = {
@@ -239,44 +239,44 @@ export const FPayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       date: getFormattedDate(),
       type: "RECOMPENSE",
       description: `Récompense rendue pour : ${serviceName}`,
-      amount: -fstart,
+      amount: -fstar,
       senderName: activeProfile.name,
       recipientName: PROFILES[recipientId].name,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`Récompense envoyée ! ${fstart} FSTART offerts.`);
+    toast.success(`Récompense envoyée ! ${fstar} FSTART offerts.`);
     return true;
   };
 
   // 4. TRANSFERT EXTERNE (Sortie)
-  const externalTransfer = (fstart: number) => {
+  const externalTransfer = (fstar: number) => {
     if (!wallet) {
       toast.error("Générez votre wallet local d'abord.");
       return false;
     }
-    if (balances[activeProfileId] < fstart) {
+    if (balances[activeProfileId] < fstar) {
       toast.error(`Solde FSTART insuffisant.`);
       return false;
     }
 
     setBalances((prev) => ({
       ...prev,
-      [activeProfileId]: prev[activeProfileId] - fstart,
+      [activeProfileId]: prev[activeProfileId] - fstar,
     }));
 
     const newTx: Transaction = {
       id: `tx_${Math.random().toString(36).substr(2, 9)}`,
       date: getFormattedDate(),
       type: "SORTIE",
-      description: `Transfert Externe (FStart sortis du système)`,
-      amount: -fstart,
+      description: `Transfert Externe (FStar sortis du système)`,
+      amount: -fstar,
       status: "COMPLETED",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    toast.success(`${fstart} FSTART ont été expulsés du système vers l'externe.`);
+    toast.success(`${fstar} FSTART ont été expulsés du système vers l'externe.`);
     return true;
   };
 
