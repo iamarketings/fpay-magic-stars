@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
-import fstarLogo from "@/assets/fstar-logo.jpg";
+import fstarLogo from "@/assets/fstar-logo.png";
 import fpayLogo from "@/assets/fpay-logo.png";
 
 export const Route = createFileRoute("/")({
@@ -301,7 +301,7 @@ function Index() {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-blue-50 rounded-[3rem] transform rotate-3 scale-105 -z-10"></div>
             <div className="bg-white border border-slate-200 p-12 rounded-[3rem] shadow-xl text-center space-y-6">
-              <img src={fstarLogo} alt="FStar Logo" className="h-40 w-40 object-contain mx-auto mix-blend-multiply" />
+              <img src={fstarLogo} alt="FStar Logo" className="h-40 w-40 object-contain mx-auto" />
               <h3 className="text-2xl font-black text-slate-900">Le moteur de FPay</h3>
               <p className="text-slate-500 text-sm">
                 Plus vous participez à la communauté, plus vous pouvez accumuler et utiliser des FStar.
