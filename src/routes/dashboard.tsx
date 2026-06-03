@@ -21,6 +21,7 @@ import {
   Bell
 } from "lucide-react";
 import fstartLogo from "@/assets/fstart-logo.jpg";
+import fpayLogo from "@/assets/fpay-logo.png";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -109,12 +110,8 @@ type Tab = "home" | "historique" | "profil" | "acheter" | "recevoir" | "envoyer"
 
 function Logo({ dark = false }: { dark?: boolean }) {
   return (
-    <Link to="/" className="flex items-center gap-3 group">
-      <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#1864FF] to-blue-400 shadow-sm">
-        <Shield className="h-5 w-5 text-white" strokeWidth={2} fill="currentColor" fillOpacity={0.2} />
-        <span className="absolute text-white font-bold text-xs">F</span>
-      </div>
-      <span className={`text-xl font-black tracking-tight ${dark ? 'text-white' : 'text-slate-900'}`}>FPay<span className="text-[#1864FF]">.</span></span>
+    <Link to="/" className="flex items-center group">
+      <img src={fpayLogo} alt="FPay Logo" className="h-8 w-auto group-hover:opacity-90 transition-opacity rounded-md" />
     </Link>
   );
 }

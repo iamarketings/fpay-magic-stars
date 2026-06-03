@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import heroImage from "@/assets/hero-illustration.png";
 import fstartLogo from "@/assets/fstart-logo.jpg";
+import fpayLogo from "@/assets/fpay-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,12 +28,8 @@ export const Route = createFileRoute("/")({
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-3 group">
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-400 shadow-[0_0_20px_-5px_rgba(37,99,235,0.4)] group-hover:scale-105 transition-transform duration-300">
-        <Shield className="h-6 w-6 text-white" strokeWidth={2.2} fill="currentColor" fillOpacity={0.2} />
-        <span className="absolute text-white font-bold text-sm">F</span>
-      </div>
-      <span className="text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">FPay<span className="text-blue-500">.</span></span>
+    <Link to="/" className="flex items-center group">
+      <img src={fpayLogo} alt="FPay Logo" className="h-10 w-auto group-hover:opacity-90 transition-opacity" />
     </Link>
   );
 }
