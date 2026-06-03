@@ -111,7 +111,7 @@ type Tab = "home" | "historique" | "profil" | "acheter" | "recevoir" | "envoyer"
 function Logo({ dark = false }: { dark?: boolean }) {
   return (
     <Link to="/" className="flex items-center group">
-      <img src={fpayLogo} alt="FPay Logo" className="h-8 w-auto group-hover:opacity-90 transition-opacity rounded-md" />
+      <img src={fpayLogo} alt="FPay Logo" className="h-8 w-auto rounded-lg shadow-sm group-hover:opacity-90 transition-opacity" />
     </Link>
   );
 }

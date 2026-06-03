@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
 function Logo() {
   return (
     <Link to="/" className="flex items-center group">
-      <img src={fpayLogo} alt="FPay Logo" className="h-10 w-auto group-hover:opacity-90 transition-opacity" />
+      <img src={fpayLogo} alt="FPay Logo" className="h-10 w-auto rounded-xl shadow-sm group-hover:opacity-90 transition-opacity" />
     </Link>
   );
 }
