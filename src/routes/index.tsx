@@ -219,7 +219,7 @@ function Index() {
         <div className="max-w-7xl mx-auto px-6 space-y-16">
 
           <div className="text-center max-w-3xl mx-auto space-y-6">
-            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-4 py-1.5 rounded-full">
+            <span className="inline-block text-sm font-black text-blue-600 bg-blue-100 px-4 py-1.5 rounded-full">
               L'écosystème FPay
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
