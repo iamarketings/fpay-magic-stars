@@ -76,15 +76,15 @@ function LoginPage() {
       </div>
 
       {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10">
+          <div className="lg:hidden text-center mb-6 md:mb-10">
             <img src={fpayLogo} alt="FPay Logo" className="h-12 w-auto mx-auto mb-4" />
             <h1 className="text-xl font-bold text-slate-900">Backoffice FPay</h1>
           </div>
 
-          <div className="glass-panel rounded-2xl p-8">
+          <div className="glass-panel rounded-2xl p-5 md:p-8">
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">Connexion</h2>
               <p className="text-sm text-slate-400 mt-1">Identifiez-vous pour accéder au backoffice</p>

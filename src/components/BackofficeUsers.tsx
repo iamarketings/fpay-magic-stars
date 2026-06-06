@@ -187,7 +187,7 @@ export default function BackofficeUsers() {
       </div>
 
       {/* Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
+      <div className="glass-panel rounded-2xl overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">

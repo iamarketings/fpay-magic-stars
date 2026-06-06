@@ -206,7 +206,7 @@ export default function BackofficeTransactions() {
       <p className="text-xs text-slate-400 mb-3 font-medium">{sorted.length} transaction(s)</p>
 
       {/* Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
+      <div className="glass-panel rounded-2xl overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">
