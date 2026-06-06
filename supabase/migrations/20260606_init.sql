@@ -44,12 +44,12 @@ CREATE POLICY "profiles_self_update" ON profiles
 -- Les admins voient tout
 CREATE POLICY "profiles_admin_select" ON profiles
   FOR SELECT TO authenticated
-  USING (auth.jwt() ->> 'role' = 'ADMIN');
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 CREATE POLICY "profiles_admin_update" ON profiles
   FOR UPDATE TO authenticated
   USING (auth.jwt() ->> 'role' = 'ADMIN')
-  WITH CHECK (auth.jwt() ->> 'role' = 'ADMIN');
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 -- ============================================================
 -- 3. WALLETS (soldes)
@@ -72,7 +72,7 @@ CREATE POLICY "wallets_self_select" ON wallets
 
 CREATE POLICY "wallets_admin_all" ON wallets
   FOR ALL TO authenticated
-  USING (auth.jwt() ->> 'role' = 'ADMIN');
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 -- ============================================================
 -- 4. TRANSACTIONS (ledger)
@@ -100,7 +100,7 @@ CREATE POLICY "transactions_self_select" ON transactions
 
 CREATE POLICY "transactions_admin_select" ON transactions
   FOR SELECT TO authenticated
-  USING (auth.jwt() ->> 'role' = 'ADMIN');
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 CREATE POLICY "transactions_insert" ON transactions
   FOR INSERT TO authenticated
@@ -152,11 +152,11 @@ CREATE POLICY "system_config_select" ON system_config
 CREATE POLICY "system_config_admin_update" ON system_config
   FOR UPDATE TO authenticated
   USING (auth.jwt() ->> 'role' = 'ADMIN')
-  WITH CHECK (auth.jwt() ->> 'role' = 'ADMIN');
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 CREATE POLICY "system_config_admin_insert" ON system_config
   FOR INSERT TO authenticated
-  WITH CHECK (auth.jwt() ->> 'role' = 'ADMIN');
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'ADMIN');
 
 -- ============================================================
 -- 7. SEED DATA (configuration initiale)

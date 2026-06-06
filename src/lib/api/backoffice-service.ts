@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseClient, getAdminClient } from "./supabase-client";
+import { getSupabaseClient, getAuthClient } from "./supabase-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,7 +219,7 @@ export class SupabaseBackofficeService implements BackofficeService {
   constructor(useAdmin = true) {
     this._useAdmin = useAdmin;
     try {
-      this._client = useAdmin ? getAdminClient() : getSupabaseClient();
+      this._client = useAdmin ? getAuthClient() : getSupabaseClient();
     } catch (e) {
       this._error = (e as Error).message;
       console.warn("[SupabaseBackofficeService]", this._error);

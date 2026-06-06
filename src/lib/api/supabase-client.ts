@@ -56,35 +56,4 @@ export function getAuthClient(): SupabaseClient {
   return authClient;
 }
 
-/**
- * Client Supabase avec la clé service_role pour les opérations admin.
- * Bypasse RLS. Utilisation réservée au backoffice.
- */
-export function getAdminClient(): SupabaseClient {
-  const serviceRoleKey =
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
-    import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl) {
-    throw new Error(
-      "Supabase URL not configured. Set VITE_SUPABASE_URL in your .env file."
-    );
-  }
-
-  if (!serviceRoleKey) {
-    console.warn(
-      "[Supabase] SUPABASE_SERVICE_ROLE_KEY not found. " +
-      "Falling back to anonymous client. Admin operations may fail."
-    );
-    return getSupabaseClient();
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
-
 export type { SupabaseClient };
