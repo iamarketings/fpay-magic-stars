@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import fpayLogo from "@/assets/fpay-logo.png";
 
-export const Route = createFileRoute("/backoffice/login")({
+export const Route = createFileRoute("/backoffice_/login")({
   component: LoginPage,
 });
 
