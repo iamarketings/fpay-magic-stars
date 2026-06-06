@@ -47,7 +47,7 @@ function generateKeys(username: string): Wallet {
 }
 
 export function OnboardingScreen() {
-  const { completeOnboarding } = useWallet();
+  const { completeOnboarding, login } = useWallet();
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Step 1
@@ -75,24 +75,37 @@ export function OnboardingScreen() {
   const [generatedWallet, setGeneratedWallet] = useState<Wallet | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     if (!email || !password || (!isLogin && !username)) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
-    if (!isLogin) {
-      const clean = mmNumber.replace(/\s+/g, '');
-      if (!MM_VALIDATORS[mmOperator].test(clean)) {
-        Alert.alert('Numéro invalide', MM_ERRORS[mmOperator]);
-        return;
+    
+    if (isLogin) {
+      setAuthLoading(true);
+      try {
+        await login(email, password);
+        // If login successful, context state updates and unmounts OnboardingScreen automatically
+      } catch (err: any) {
+        Alert.alert('Erreur de connexion', err.message || 'Identifiants invalides');
+        setAuthLoading(false);
       }
+      return;
     }
+
+    const clean = mmNumber.replace(/\s+/g, '');
+    if (!MM_VALIDATORS[mmOperator].test(clean)) {
+      Alert.alert('Numéro invalide', MM_ERRORS[mmOperator]);
+      return;
+    }
+
     setAuthLoading(true);
+    // Move to step 2 for KYC (simulated transition for signup flow)
     setTimeout(() => {
       setAuthLoading(false);
       setPhone(mmNumber);
       setStep(2);
-    }, 900);
+    }, 500);
   };
 
   const handleKyc = () => {
@@ -108,8 +121,8 @@ export function OnboardingScreen() {
     setTimeout(() => {
       setKycLoading(false);
       setKycDone(true);
-      setTimeout(() => setStep(3), 1200);
-    }, 2000);
+      setTimeout(() => setStep(3), 800);
+    }, 1200);
   };
 
   const handleGenerateWallet = () => {
@@ -142,11 +155,12 @@ export function OnboardingScreen() {
         setGeneratedWallet(w);
         setGenerating(false);
       }
-    }, 350);
+    }, 250);
   };
 
   const handleFinish = async () => {
     if (!generatedWallet) return;
+    setAuthLoading(true);
     const uname = username || email.split('@')[0];
     const profile: UserProfile = {
       email,
@@ -157,7 +171,13 @@ export function OnboardingScreen() {
       mmOperator,
       mmNumber,
     };
-    await completeOnboarding(profile, generatedWallet);
+    try {
+      await completeOnboarding(password, profile, generatedWallet);
+    } catch(err: any) {
+      Alert.alert("Erreur d'inscription", err.message || "Impossible de créer le compte");
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   return (
