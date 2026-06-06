@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BackofficeRouteImport } from './routes/backoffice'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BackofficeLoginRouteImport } from './routes/backoffice.login'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BackofficeRoute = BackofficeRouteImport.update({
+  id: '/backoffice',
+  path: '/backoffice',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,30 +29,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BackofficeLoginRoute = BackofficeLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => BackofficeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/backoffice': typeof BackofficeRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/backoffice/login': typeof BackofficeLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/backoffice': typeof BackofficeRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/backoffice/login': typeof BackofficeLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/backoffice': typeof BackofficeRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/backoffice/login': typeof BackofficeLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard'
+  fullPaths: '/' | '/backoffice' | '/dashboard' | '/backoffice/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard'
-  id: '__root__' | '/' | '/dashboard'
+  to: '/' | '/backoffice' | '/dashboard' | '/backoffice/login'
+  id: '__root__' | '/' | '/backoffice' | '/dashboard' | '/backoffice/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BackofficeRoute: typeof BackofficeRouteWithChildren
   DashboardRoute: typeof DashboardRoute
 }
 
@@ -58,6 +77,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/backoffice': {
+      id: '/backoffice'
+      path: '/backoffice'
+      fullPath: '/backoffice'
+      preLoaderRoute: typeof BackofficeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -65,11 +91,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/backoffice/login': {
+      id: '/backoffice/login'
+      path: '/login'
+      fullPath: '/backoffice/login'
+      preLoaderRoute: typeof BackofficeLoginRouteImport
+      parentRoute: typeof BackofficeRoute
+    }
   }
 }
 
+interface BackofficeRouteChildren {
+  BackofficeLoginRoute: typeof BackofficeLoginRoute
+}
+
+const BackofficeRouteChildren: BackofficeRouteChildren = {
+  BackofficeLoginRoute: BackofficeLoginRoute,
+}
+
+const BackofficeRouteWithChildren = BackofficeRoute._addFileChildren(
+  BackofficeRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BackofficeRoute: BackofficeRouteWithChildren,
   DashboardRoute: DashboardRoute,
 }
 export const routeTree = rootRouteImport

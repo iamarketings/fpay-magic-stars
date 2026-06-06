@@ -1,6 +1,15 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/800.css";
+@import "@fontsource/inter/900.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -73,3 +82,49 @@
     color: var(--color-foreground);
   }
 }
+
+@layer utilities {
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .glass-panel {
+    background-color: rgba(15, 23, 42, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+  
+  .glass-sidebar {
+    background-color: rgba(2, 6, 23, 0.85); /* zinc-950 */
+    backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 20px rgba(24, 100, 255, 0.5);
+  }
+  
+  .premium-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, var(--color-card), #f8fafc);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark .premium-card {
+    background: linear-gradient(to bottom, var(--color-card), #020617);
+  }
+
+  .premium-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .premium-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  }
+}
+

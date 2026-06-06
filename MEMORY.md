@@ -1,0 +1,2 @@
+- [Feedback Antigravity](memory/feedback_antigravity.md) — Antigravity ignore les instructions de suppression de dossiers
+- [Plan Backoffice](memory/project_backoffice_plan.md) — Architecture et plan backoffice FPay

@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, createRootRouteWithContext, Link } from "@tanstack/react-router";
 import { FPayProvider } from "../hooks/use-fpay";
+import { BackofficeProvider } from "../hooks/use-backoffice";
+import { AdminAuthProvider } from "../hooks/use-admin-auth";
 import { Toaster } from "sonner";
 
 function NotFoundComponent() {
@@ -55,8 +57,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <FPayProvider>
-        <Outlet />
-        <Toaster position="top-right" richColors />
+        <BackofficeProvider>
+          <AdminAuthProvider>
+            <Outlet />
+            <Toaster position="top-right" richColors />
+          </AdminAuthProvider>
+        </BackofficeProvider>
       </FPayProvider>
     </QueryClientProvider>
   );

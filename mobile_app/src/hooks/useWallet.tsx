@@ -5,6 +5,7 @@ import {
   saveWallet, loadWallet, saveBalance, loadBalance,
   saveTransactions, loadTransactions, exportBackupData,
 } from '../storage';
+import { supabase } from '../lib/supabase';
 
 interface WalletContextType {
   appState: AppState;
@@ -40,8 +41,36 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const wallet = await loadWallet(account.username);
 
         if (kyc && wallet) {
-          const balance = await loadBalance(account.username);
-          const transactions = await loadTransactions(account.username);
+          // Fetch real balance from Supabase if possible
+          let balance = await loadBalance(account.username);
+          let transactions = await loadTransactions(account.username);
+          
+          try {
+            const { data: profileData } = await supabase.from('profiles').select('id, kyc_status').eq('username', account.username).single();
+            if (profileData) {
+              const { data: walletData } = await supabase.from('wallets').select('balance_a').eq('user_id', profileData.id).single();
+              if (walletData) balance = walletData.balance_a;
+              
+              const { data: txData } = await supabase.from('transactions')
+                .select('*')
+                .or(`sender_id.eq.${profileData.id},recipient_id.eq.${profileData.id}`)
+                .order('created_at', { ascending: false });
+                
+              if (txData) {
+                 transactions = txData.map((t: any) => ({
+                    id: t.id,
+                    type: t.sender_id === profileData.id ? 'send' : 'receive',
+                    amount: t.amount,
+                    address: t.sender_id === profileData.id ? t.recipient_username || t.recipient_id : t.sender_username || t.sender_id,
+                    status: t.status.toLowerCase(),
+                    date: t.created_at,
+                    fee: t.fee,
+                 }));
+              }
+            }
+          } catch (e) {
+            console.warn("Could not sync with Supabase, using local data", e);
+          }
 
           setAppState({
             profile: {
@@ -76,17 +105,44 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       mmOperator: profile.mmOperator,
       mmNumber: profile.mmNumber,
     });
-    // KYC is split from profile for compatibility
+    
     const nameParts = profile.name.split(' ');
+    const firstName = nameParts[0] || profile.username;
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
     await saveKyc(profile.username, {
-      firstName: nameParts[0] || profile.username,
-      lastName: nameParts.slice(1).join(' ') || '',
+      firstName,
+      lastName,
       phone: profile.phone,
       country: 'Madagascar',
     });
     await saveWallet(profile.username, wallet);
     await saveBalance(profile.username, 0);
     await saveTransactions(profile.username, []);
+
+    try {
+      const { data: pData, error: pError } = await supabase.from('profiles').insert({
+        username: profile.username,
+        email: profile.email,
+        first_name: firstName,
+        last_name: lastName,
+        phone: profile.phone,
+        public_key: wallet.publicKey,
+        encrypted_private_key: wallet.secret, // Encrypted payload
+        role: 'USER',
+        kyc_status: 'PENDING'
+      }).select('id').single();
+
+      if (!pError && pData) {
+        await supabase.from('wallets').insert({
+          user_id: pData.id,
+          balance_a: 0,
+          balance_b: 0,
+        });
+      }
+    } catch(e) {
+      console.warn("Could not create Supabase profile", e);
+    }
 
     setAppState({
       profile,
@@ -114,6 +170,24 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setAppState(prev => ({ ...prev, transactions: newTxs }));
     if (appState.profile?.username) {
       await saveTransactions(appState.profile.username, newTxs);
+      
+      // Sync to supabase
+      try {
+        const { data: profile } = await supabase.from('profiles').select('id').eq('username', appState.profile.username).single();
+        if (profile) {
+           await supabase.from('transactions').insert({
+             type: 'TRANSFERT',
+             sender_id: profile.id,
+             sender_username: appState.profile.username,
+             recipient_id: tx.address, // In real app, we need recipient profile id
+             amount: tx.amount,
+             fee: tx.fee || 0,
+             status: 'COMPLETED'
+           });
+        }
+      } catch(e) {
+        console.warn("Could not sync transaction to Supabase", e);
+      }
     }
   };
 
@@ -121,6 +195,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setAppState(prev => ({ ...prev, balance: newBalance }));
     if (appState.profile?.username) {
       await saveBalance(appState.profile.username, newBalance);
+      
+      // Update wallet balance in Supabase
+      try {
+        const { data: profile } = await supabase.from('profiles').select('id').eq('username', appState.profile.username).single();
+        if (profile) {
+           await supabase.from('wallets').update({ balance_a: newBalance }).eq('user_id', profile.id);
+        }
+      } catch(e) {
+        console.warn("Could not update balance in Supabase", e);
+      }
     }
   };
 
@@ -145,3 +229,4 @@ export function useWallet() {
   if (!ctx) throw new Error('useWallet must be used inside WalletProvider');
   return ctx;
 }
+
