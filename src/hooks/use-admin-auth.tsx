@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import type { AuthTokenResponsePassword, Session, User } from "@supabase/supabase-js";
+import type { AuthTokenResponsePassword, Session, User, SupabaseClient } from "@supabase/supabase-js";
 import { getAuthClient } from "@/lib/api/supabase-client";
 
 // ---------------------------------------------------------------------------
@@ -74,37 +74,69 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (initialized.current) return;
     initialized.current = true;
 
-    const auth = getAuthClient();
+    let auth: SupabaseClient;
 
-    auth.auth.getSession().then(async ({ data: { session: existingSession } }) => {
-      if (existingSession?.user) {
-        setSession(existingSession);
-        setUser(existingSession.user);
-        const p = await fetchProfile(existingSession.user.id, existingSession.access_token);
-        if (p) {
-          setProfile(p);
-        } else {
-          // Session invalide (pas admin) → logout
-          await auth.auth.signOut();
-          setSession(null);
-          setUser(null);
-        }
-      }
+    try {
+      auth = getAuthClient();
+    } catch (e) {
+      console.error("[AdminAuth] Failed to initialize Supabase client:", e);
+      setError("Erreur de connexion à la base de données.");
       setIsLoading(false);
-    });
+      return;
+    }
+
+    auth.auth.getSession()
+      .then(async ({ data: { session: existingSession } }) => {
+        if (existingSession?.user) {
+          setSession(existingSession);
+          setUser(existingSession.user);
+          try {
+            const p = await fetchProfile(existingSession.user.id, existingSession.access_token);
+            if (p) {
+              setProfile(p);
+            } else {
+              // Session invalide (pas admin) → nettoyage local sans appeler signOut()
+              // (évite les boucles avec onAuthStateChange)
+              setSession(null);
+              setUser(null);
+              await auth.auth.signOut().catch(() => {});
+            }
+          } catch (e) {
+            console.warn("[AdminAuth] Profile fetch error during init:", e);
+            await auth.auth.signOut().catch(() => {});
+            setSession(null);
+            setUser(null);
+          }
+        }
+        setIsLoading(false);
+      })
+      .catch((e) => {
+        console.error("[AdminAuth] getSession() failed:", e);
+        setError("Erreur de vérification de session.");
+        setIsLoading(false);
+      });
 
     // Écouter les changements d'auth
     const { data: { subscription } } = auth.auth.onAuthStateChange(async (event, currentSession) => {
       if (event === "SIGNED_IN" && currentSession?.user) {
         setSession(currentSession);
         setUser(currentSession.user);
-        const p = await fetchProfile(currentSession.user.id, currentSession.access_token);
-        if (p) {
-          setProfile(p);
-          setError(null);
-        } else {
-          setError("Accès refusé : vous n'avez pas les droits administrateur.");
-          await auth.auth.signOut();
+        try {
+          const p = await fetchProfile(currentSession.user.id, currentSession.access_token);
+          if (p) {
+            setProfile(p);
+            setError(null);
+          } else {
+            setError("Accès refusé : vous n'avez pas les droits administrateur.");
+            await auth.auth.signOut().catch(() => {});
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          }
+        } catch (e) {
+          console.warn("[AdminAuth] Profile fetch error:", e);
+          setError("Erreur de vérification du profil.");
+          await auth.auth.signOut().catch(() => {});
           setSession(null);
           setUser(null);
           setProfile(null);
