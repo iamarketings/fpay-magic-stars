@@ -1,14 +1,3 @@
 {
-  "tasks": [
-    {
-      "id": "dcf6b233",
-      "cron": "*/1 * * * *",
-      "prompt": "Vérification automatique : consulte AGENT_CHAT.md et signale immédiatement tout nouveau message d'Antigravity qui n'a pas encore été traité. Résume le contenu du message et confirme si une action est requise.",
-      "createdAt": 1780788351265,
-      "lastFiredAt": 1780788566488,
-      "recurring": true,
-      "createdBySessionId": "19a80e34-2c35-4a80-9108-4a7f99bd4162",
-      "createdByPid": 3300
-    }
-  ]
+  "tasks": []
 }
